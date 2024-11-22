@@ -35,3 +35,53 @@ enum SortOrder {
     PriceDesc,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct ResponseOffers {
+    offers: Vec<Offer>,
+    priceRange: Vec<PriceRange>,
+    carTypeCounts: CarTypeCount,
+    seatsCount: Vec<SeatCount>,
+    freeKilometerRange: Vec<FreeKilometerRange>,
+    vollkaskoCount: VollKaskoCount,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Offer {
+    id: String,
+    data: String
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct PriceRange {
+    start: i32,
+    end: i32,
+    count: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct CarTypeCount {
+    small: i32,
+    sports: i32,
+    luxury: i32,
+    family: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct SeatCount {
+    count: i32,
+    numberSeats: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct FreeKilometerRange {
+    start: i32,
+    end: i32,
+    count: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct VollKaskoCount {
+    trueCount: i32,
+    falseCount: i32,
+}
+
