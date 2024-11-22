@@ -12,12 +12,12 @@ struct RequestOffer {
     page_size: i32,
     price_range_width: i32,
     min_free_kilometer_width: i32,
-    min_number_seats: i32,
-    min_price: i32,
-    max_price: i32,
-    car_type: CarType,
-    only_vollkasko: bool,
-    min_free_kilometer: i32,
+    min_number_seats: Option<i32>,
+    min_price: Option<i32>,
+    max_price: Option<i32>,
+    car_type: Option<CarType>,
+    only_vollkasko: Option<bool>,
+    min_free_kilometer: Option<i32>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -92,7 +92,7 @@ struct VollKaskoCount {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct PostRequest {
-
+    offset: Vec<Offer>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -101,7 +101,14 @@ struct Offer {
     id: String,
     // TODO: optimize?
     data: String, // base64 encoded 256 Byte array
-
+    most_specific_region_ID: i32,
+    start_date: i32,
+    end_date: i32,
+    number_seats: i32,
+    price: i32,
+    car_type: CarType,
+    has_vollkasko: bool,
+    free_kilometers: i32,
 }
 
 
