@@ -1,22 +1,23 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct RequestOffer {
-    regionID: i8,
-    timeRangeStart: i32,
-    timeRangeEnd: i32,
-    numberDays: i32,
-    sortOrder: SortOrder,
+    region_id: i8,
+    time_range_start: i32,
+    time_range_end: i32,
+    number_days: i32,
+    sort_order: SortOrder,
     page: i32,
-    pageSize: i32,
-    priceRangeWidth: i32,
-    minFreeKilometerWidth: i32,
-    minNumberSeats: i32,
-    minPrice: i32,
-    maxPrice: i32,
-    carType: CarType,
-    onlyVollkasko: bool,
-    minFreeKilometer: i32,
+    page_size: i32,
+    price_range_width: i32,
+    min_free_kilometer_width: i32,
+    min_number_seats: i32,
+    min_price: i32,
+    max_price: i32,
+    car_type: CarType,
+    only_vollkasko: bool,
+    min_free_kilometer: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -36,19 +37,21 @@ enum SortOrder {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct ResponseOffers {
-    offers: Vec<Offer>,
-    priceRange: Vec<PriceRange>,
-    carTypeCounts: CarTypeCount,
-    seatsCount: Vec<SeatCount>,
-    freeKilometerRange: Vec<FreeKilometerRange>,
-    vollkaskoCount: VollKaskoCount,
+    offers: Vec<ResponseOffer>,
+    price_range: Vec<PriceRange>,
+    car_type_counts: CarTypeCount,
+    seats_count: Vec<SeatCount>,
+    free_kilometer_range: Vec<FreeKilometerRange>,
+    vollkasko_count: VollKaskoCount,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Offer {
+#[serde(rename_all = "camelCase")]
+struct ResponseOffer {
     id: String,
-    data: String
+    data: String // encoded as base64
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -69,7 +72,7 @@ struct CarTypeCount {
 #[derive(Serialize, Deserialize, Debug)]
 struct SeatCount {
     count: i32,
-    numberSeats: i32,
+    number_seats: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -80,8 +83,25 @@ struct FreeKilometerRange {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct VollKaskoCount {
-    trueCount: i32,
-    falseCount: i32,
+    true_count: i32,
+    false_count: i32,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct PostRequest {
+
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct Offer {
+    id: String,
+    // TODO: optimize?
+    data: String, // base64 encoded 256 Byte array
+
+}
+
 
