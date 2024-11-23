@@ -84,11 +84,7 @@ impl DBManager {
     }
 
     pub fn query_for(&self, request_offer: RequestOffer) -> Result<GetReponseBodyModel, Error> {
-        let mut seat_amount: HashMap<i32, i32> = HashMap::new();
-        let mut price_ranges: HashMap<i32,i32> = HashMap::new();
 
-        let mut response_offers_list: Vec<ResponseOffer> = Vec::new();
-        let mut price_range_list: Vec<i32> = vec![0];
 
         let conn = &self.conn;
         let mut stmt = conn.prepare(SEARCH_QUERY)?;
@@ -119,8 +115,6 @@ impl DBManager {
         for offer in results.by_ref() {
             let off = offer?;
 
-            response_offers_list.push(ResponseOffer{ID: off.id, data: off.data});
-
             if off.has_vollkasko {
                 true_count += 1
             } else { false_count += 1 }
@@ -132,43 +126,82 @@ impl DBManager {
                 CarType::Family => {family += 1}
             }
 
-
-
         }
 
+
+        //
+        // number seats slicing
+        //
+
+        // TODO: only once
+        // setup a list of offers
+        let mut vec_number_seats = results.by_ref()
+            .map(|a| a.ok())
+            .filter_map(|a| a)
+            .collect::<Vec<Offer>>()
+            ;
+
+        vec_number_seats
+            .sort_by(|a, b| a.number_seats.cmp(&b.number_seats));
+
+        let seatCountVec = vec_number_seats.chunk_by(|a, b| {
+            a.number_seats == b.number_seats
+        }).map(|chunk| {
+            let number_seats = chunk.first().unwrap().number_seats;
+            let count = chunk.len() as i32;
+            SeatCount{number_seats, count}
+        }).collect::<Vec<SeatCount>>();
+
+
+        //
         // free kilometers slicing
-        for offer in results.by_ref()
-            .filter(|a| {
-                return if let Some(_) = a {
-                    true
-                } else {
-                    false
-                }
-            })
-            .is_sorted_by(|a, b| {
-                if let Some(a_ok) = a {
-                    if let Some(b_ok) = b {
-                        &a.free_kilometers < &b.free_kilometers
-                    }
-                }
-                let a_ok = a?;
-                let b_ok = b?;
-                &a.free_kilometers < &b.free_kilometers
-            }) {
+        //
 
+        // TODO: only once
+        // setup a list of offers
+        let mut vec_offers_free_kilometers = results.by_ref()
+            .map(|a| a.ok())
+            .filter_map(|a| a)
+            .collect::<Vec<Offer>>()
+            ;
+
+        vec_offers_free_kilometers
+            .sort_by(|a, b| a.free_kilometers.cmp(&b.free_kilometers));
+        let (head_free_km, tail_free_km) = vec_offers_free_kilometers.split_at(0);
+
+        // magic number access,
+        let first_km = head_free_km.first().unwrap();
+
+        let mut lower_bound_free_km = first_km.free_kilometers + request_offer.min_free_kilometer_width;
+
+        let mut km_vec_vec: Vec<Vec<&Offer>> = vec![]; // i literally do not care
+        km_vec_vec.push(vec![first_km]);
+
+        for offer in tail_free_km {
+            if offer.free_kilometers < lower_bound_free_km {
+                km_vec_vec.last_mut().unwrap()
+                    .push(offer);
+            } else {
+                lower_bound_free_km += request_offer.min_free_kilometer_width;
+                km_vec_vec.push(vec![offer]);
+            }
         }
 
-
-
+        let free_kilometer_range_bucket = km_vec_vec.iter().map(|a| {
+            let start = a.first().unwrap().free_kilometers;
+            let end = a.last().unwrap().free_kilometers;
+            let count = a.len() as i32;
+            FreeKilometerRange{start, end, count}
+        }).collect();
 
         return Ok(GetReponseBodyModel{
-            offers: response_offers_list,
+            offers: vec![],
             price_ranges: vec![],
             car_type_counts: CarTypeCount {
                 small, sports, luxury, family
             },
-            seats_count: vec![],
-            free_kilometer_range: vec![],
+            seats_count: seatCountVec,
+            free_kilometer_range: free_kilometer_range_bucket,
             vollkasko_count: VollKaskoCount {
                 true_count, false_count
             }

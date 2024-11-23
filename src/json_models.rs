@@ -90,15 +90,15 @@ pub struct CarTypeCount {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct SeatCount {
-    count: i32,
-    number_seats: i32,
+    pub count: i32,
+    pub number_seats: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct FreeKilometerRange {
-    start: i32,
-    end: i32,
-    count: i32,
+    pub start: i32,
+    pub end: i32,
+    pub count: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
