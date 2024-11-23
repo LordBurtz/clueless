@@ -2,6 +2,7 @@
 mod db_manager;
 mod json_models;
 mod db_models;
+mod region_hierarchy;
 
 use json_models::*;
 
@@ -15,6 +16,7 @@ use hyper_util::rt::TokioIo;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
+use crate::region_hierarchy::populate_region_hierarchy;
 
 type GenericError = Box<dyn std::error::Error + Send + Sync>;
 type Result<T> = std::result::Result<T, GenericError>;
@@ -136,6 +138,7 @@ async fn main() -> Result<()> {
 
     let db_manager = Arc::new(DBManager::new(db_client));
     db_manager.init().await?;
+    populate_region_hierarchy(&db_manager).await?;
 
     let addr: SocketAddr = "127.0.0.1:3000".parse().unwrap();
 

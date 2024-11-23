@@ -25,3 +25,9 @@ pub enum CarType {
     Luxury = 2,
     Family = 3,
 }
+
+#[derive(Serialize, Deserialize, Debug, Row)]
+pub struct RegionHierarchy {
+    pub ancestor_id: u32,
+    pub descendant_id: u32,
+}

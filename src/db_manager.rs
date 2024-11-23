@@ -1,5 +1,5 @@
 use std::cmp::PartialEq;
-use crate::db_models::{CarType, Offer};
+use crate::db_models::{CarType, Offer, RegionHierarchy};
 use crate::json_models::*;
 use crate::json_models::{
     CarTypeCount, FreeKilometerRange, GetReponseBodyModel, PostRequestBodyModel, PriceRange,
@@ -69,11 +69,47 @@ impl DBManager {
         free_kilometers UInt32 NOT NULL
     )
     ENGINE = MergeTree
-    ORDER BY (id, has_vollkasko, car_type, number_seats, most_specific_region_id, free_kilometers, price, start_date, end_date)
+    ORDER BY (id, has_vollkasko, car_type, number_seats, most_specific_region_id, free_kilometers, price, start_date, end_date);
 "#,
             )
             .execute()
             .await?;
+
+        self.client
+            .query(
+                r#"
+        CREATE TABLE IF NOT EXISTS region_hierarchy (
+        ancestor_id UInt32,
+        descendant_id UInt32
+    ) ENGINE = MergeTree()
+    ORDER BY (ancestor_id, descendant_id);
+        "#,
+            )
+            .execute()
+            .await?;
+        Ok(())
+    }
+
+    pub async fn delete_region_hierarchy(&self) -> Result<(), GenericError> {
+        self.client
+            .query("TRUNCATE TABLE region_hierarchy")
+            .execute()
+            .await?;
+        Ok(())
+    }
+
+    pub async fn insert_region_hierarchy(
+        &self,
+        regions: Vec<RegionHierarchy>,
+    ) -> Result<(), GenericError> {
+        let mut insert = self.client.insert("region_hierarchy")?;
+
+        for region in regions {
+            insert.write(&region).await?;
+        }
+
+        insert.end().await?;
+
         Ok(())
     }
 
@@ -136,9 +172,7 @@ impl DBManager {
         //         query_string.push_str(" AND price >= ?");
         //     }
         // }
-        let mut query = self
-            .client
-            .query(&query_string);
+        let mut query = self.client.query(&query_string);
 
         /// For now commented out, as we filter not in sql but in rust
 
