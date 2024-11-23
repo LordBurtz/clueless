@@ -114,17 +114,11 @@ pub struct VollKaskoCount {
     pub false_count: u32,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct PostRequestBodyModel {
-    pub offers: Vec<Offer>,
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct Offer {
+pub struct Offer<'a> {
     #[serde(rename = "ID")]
-    pub id: String,
+    pub id: &'a str,
     // TODO: optimize?
     pub data: String, // base64 encoded 256 Byte array
     pub most_specific_region_ID: u32,

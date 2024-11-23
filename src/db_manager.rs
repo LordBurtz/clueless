@@ -1,7 +1,7 @@
 use crate::db_models::{CarType, Offer, RegionHierarchy};
 use crate::json_models::*;
 use crate::json_models::{
-    CarTypeCount, FreeKilometerRange, GetReponseBodyModel, PostRequestBodyModel, PriceRange,
+    CarTypeCount, FreeKilometerRange, GetReponseBodyModel, PriceRange,
     RequestOffer, ResponseOffer, SeatCount, SortOrder, VollKaskoCount,
 };
 use crate::GenericError;
@@ -9,7 +9,7 @@ use clickhouse::sql::Bind;
 
 #[derive(Clone)]
 pub struct DBManager {
-    client: clickhouse::Client,
+    pub client: clickhouse::Client,
 }
 
 const INSERT_QUERY: &str = r#"
@@ -105,31 +105,6 @@ impl DBManager {
 
         for region in regions {
             insert.write(&region).await?;
-        }
-
-        insert.end().await?;
-
-        Ok(())
-    }
-
-    pub async fn insert_offers(&self, offers: PostRequestBodyModel) -> Result<(), GenericError> {
-        let mut insert = self.client.insert("offers")?;
-
-        for offer in offers.offers {
-            insert
-                .write(&Offer {
-                    id: offer.id,
-                    data: offer.data,
-                    most_specific_region_id: offer.most_specific_region_ID,
-                    start_date: offer.start_date,
-                    end_date: offer.end_date,
-                    number_seats: offer.number_seats,
-                    price: offer.price,
-                    car_type: offer.car_type.into(),
-                    has_vollkasko: offer.has_vollkasko,
-                    free_kilometers: offer.free_kilometers,
-                })
-                .await?;
         }
 
         insert.end().await?;
