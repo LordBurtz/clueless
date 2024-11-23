@@ -185,7 +185,7 @@ impl DBManager {
         // if let Some(numberOfSeats) = request_offer.min_number_seats {
         //     query = query.bind(numberOfSeats);
         // }
-        // if let Some(carType) = request_offer.car_type {
+        // if let ®Some(carType) = request_offer.car_type {
         //     query = query.bind(carType as u32);
         // }
         // if let Some(hasVollkasko) = request_offer.only_vollkasko {
@@ -200,15 +200,164 @@ impl DBManager {
         //         query = query.bind(maxPrice);
         //     }
         // }
+
+        //
+        //Results of db query
+        //
+
         let offers = query.fetch_all::<Offer>().await?;
 
+        //
+        // Count vollkasko and car type options
+        //
+
+        let (vollkasko_count, car_type_count) =
+            Self::toVollkaskoOffers(offers.as_ref());
+
+
+        //
+        // price range slicing
+        //
+
+        let price_range_bucket=
+            Self::toPriceRangesOffers(offers.as_ref(), request_offer.price_range_width);
+
+
+        //
+        // free kilometers slicing
+        //
+
+        let free_kilometer_range_bucket =
+            Self::toFreeKilometersOffers(offers.as_ref(), request_offer.price_range_width);
+
+
+        //
+        // calculate seat count
+        //
+
+        let seatCountVec =
+            Self::toSeatNumberOffers(offers.as_ref());
+
+
+        //
+        // calculate the different price range occurrences
+        //
+
+        let prince_range_bucket =
+            Self::toPriceRangesOffers(offers.as_ref(), request_offer.price_range_width);
+
+
+        //
+        // Apply all optional filters, then paginate and return
+        //
+
+        let paged_offers =
+            Self::sortOrdersAndPaginate(offers, request_offer);
+
+        return Ok(GetReponseBodyModel {
+            offers: paged_offers,
+            price_ranges: price_range_bucket,
+            car_type_counts: car_type_count,
+            seats_count: seatCountVec,
+            free_kilometer_range: free_kilometer_range_bucket,
+            vollkasko_count: vollkasko_count,
+        });
+    }
+
+    fn sortOrdersAndPaginate(offers: Vec<Offer>, request_offer: RequestOffer) -> Vec<ResponseOffer> {
+        let mut possible_filtered_offers: Vec<Offer> =  offers.into_iter().filter(|a| {
+            if let Some(numberOfSeats) = request_offer.min_number_seats {
+                if a.number_seats < numberOfSeats {
+                    return false;
+                }
+            }
+            if let Some(carType) = request_offer.car_type {
+                if a.car_type.eqMe(&carType) {
+                    return false;
+                }
+            }
+            if let Some(hasVollkasko) = request_offer.only_vollkasko {
+                if a.has_vollkasko != hasVollkasko {
+                    return false;
+                }
+            }
+            if let Some(freeKilometers) = request_offer.min_free_kilometer {
+                if a.free_kilometers < freeKilometers {
+                    return false;
+                }
+            }
+            if let Some(minPrice) = request_offer.min_price {
+                if let Some(maxPrice) = request_offer.max_price {
+                    if (maxPrice <= a.price) {
+                        return false;
+                    }
+                }
+                if minPrice > a.price {
+                    return false;
+                }
+            }
+            return true;
+        }).collect::<Vec<Offer>>();
+
+        match request_offer.sort_order {
+            SortOrder::PriceAsc => possible_filtered_offers.sort_by(|a, b| a.number_seats.cmp(&b.number_seats)),
+            SortOrder::PriceDesc => possible_filtered_offers.sort_by(|a, b| b.number_seats.cmp(&a.number_seats)),
+        }
+
+        return possible_filtered_offers
+            .into_iter()
+            //TODO: double check if pagination starts at 1
+            .skip(((request_offer.page - 1) * request_offer.page_size) as usize)
+            .take(request_offer.page_size as usize)
+            .map(|o| ResponseOffer {
+                ID: o.id,
+                data: o.data,
+            })
+            .collect();
+    }
+
+    fn toFreeKilometersOffers(offers: &Vec<Offer>, min_free_kilometer_width: u32) ->  Vec<FreeKilometerRange> {
+        let mut vec_offers_free_kilometers = offers.clone();
+        vec_offers_free_kilometers.sort_by(|a, b| a.free_kilometers.cmp(&b.free_kilometers));
+        let (head_free_km, tail_free_km) = vec_offers_free_kilometers.split_at(1);
+
+        // magic number access,
+        let first_km = head_free_km.first().unwrap();
+
+        let mut lower_bound_free_km =
+            first_km.free_kilometers + min_free_kilometer_width;
+
+        let mut km_vec_vec: Vec<Vec<&Offer>> = vec![]; // i literally do not care
+        km_vec_vec.push(vec![first_km]);
+
+        for offer in tail_free_km {
+            if offer.free_kilometers < lower_bound_free_km {
+                km_vec_vec.last_mut().unwrap().push(offer);
+            } else {
+                lower_bound_free_km += min_free_kilometer_width;
+                km_vec_vec.push(vec![offer]);
+            }
+        }
+
+        return km_vec_vec
+            .iter()
+            .map(|a| {
+                let start = a.first().unwrap().free_kilometers;
+                let end = a.last().unwrap().free_kilometers;
+                let count = a.len() as u32;
+                FreeKilometerRange { start, end, count }
+            })
+            .collect();
+    }
+
+    fn toVollkaskoOffers(offers: &Vec<Offer>) -> (VollKaskoCount, CarTypeCount) {
         // counts for vollkasko occurences
         let (mut true_count, mut false_count) = (0, 0);
 
         // counts for car types
         let (mut small, mut sports, mut luxury, mut family) = (0, 0, 0, 0);
 
-        for offer in &offers {
+        for offer in offers {
             if offer.has_vollkasko {
                 true_count += 1
             } else {
@@ -223,11 +372,22 @@ impl DBManager {
             }
         }
 
-        //
-        // price range slicing
-        //
+        let vollkasko_count = VollKaskoCount {
+            true_count,
+            false_count,
+        };
 
-        // TODO: only once
+        let car_type_count = CarTypeCount {
+            small,
+            sports,
+            luxury,
+            family,
+        };
+
+        (vollkasko_count, car_type_count)
+    }
+
+    pub fn toPriceRangesOffers(offers: &Vec<Offer>, price_range_width: u32) -> Vec<PriceRange> {
         let mut vec_offers_price_range = offers.clone();
 
         vec_offers_price_range.sort_by(|a, b| a.price.cmp(&b.price));
@@ -236,23 +396,21 @@ impl DBManager {
         // magic number access,
         let first_price_offer = head_price_range.first().unwrap();
 
-        let mut lower_bound_price_range = first_price_offer.price + request_offer.price_range_width;
+        let mut lower_bound_price_range = first_price_offer.price + price_range_width;
 
         let mut price_vec_vec: Vec<Vec<&Offer>> = vec![]; // i literally do not care
-        let mut vec_number_seats = offers.clone();
-        let mut vec_offers_free_kilometers = offers.clone();
         price_vec_vec.push(vec![first_price_offer]);
 
         for offer in tail_price_range {
             if offer.price < lower_bound_price_range {
                 price_vec_vec.last_mut().unwrap().push(offer);
             } else {
-                lower_bound_price_range += request_offer.price_range_width;
+                lower_bound_price_range += price_range_width;
                 price_vec_vec.push(vec![offer]);
             }
         }
 
-        let price_range_bucket = price_vec_vec
+        return price_vec_vec
             .iter()
             .map(|a| {
                 let start = a.first().unwrap().price;
@@ -261,80 +419,13 @@ impl DBManager {
                 PriceRange { start, end, count }
             })
             .collect();
+    }
 
-        //
-        // Sort orders and paginate
-        //
-
-        let temp_offers = offers.clone();
-
-        let mut possible_filtered_offers: Vec<&Offer> = temp_offers
-            .iter()
-            .filter(|a| {
-                if let Some(numberOfSeats) = request_offer.min_number_seats {
-                    if a.number_seats < numberOfSeats {
-                        return false;
-                    }
-                }
-                if let Some(carType) = request_offer.car_type {
-                    if a.car_type.eqMe(&carType) {
-                        return false;
-                    }
-                }
-                if let Some(hasVollkasko) = request_offer.only_vollkasko {
-                    if a.has_vollkasko != hasVollkasko {
-                        return false;
-                    }
-                }
-                if let Some(freeKilometers) = request_offer.min_free_kilometer {
-                    if a.free_kilometers < freeKilometers {
-                        return false;
-                    }
-                }
-                if let Some(minPrice) = request_offer.min_price {
-                    if let Some(maxPrice) = request_offer.max_price {
-                        if (maxPrice <= a.price) {
-                            return false;
-                        }
-                    }
-                    if minPrice > a.price {
-                        return false;
-                    }
-                }
-                return true;
-            })
-            .collect::<Vec<&Offer>>();
-
-        match request_offer.sort_order {
-            SortOrder::PriceAsc => {
-                possible_filtered_offers.sort_by(|a, b| a.number_seats.cmp(&b.number_seats))
-            }
-            SortOrder::PriceDesc => {
-                possible_filtered_offers.sort_by(|a, b| b.number_seats.cmp(&a.number_seats))
-            }
-        }
-
-        let paged_offers: Vec<ResponseOffer> = offers
-            .into_iter()
-            //TODO: double check if pagination starts at 1
-            .skip(((request_offer.page - 1) * request_offer.page_size) as usize)
-            .take(request_offer.page_size as usize)
-            .map(|o| ResponseOffer {
-                ID: o.id,
-                data: o.data,
-            })
-            .collect();
-
-        //
-        // number seats slicing
-        //
-
-        // TODO: only once
-        // setup a list of offers
-
+    pub fn toSeatNumberOffers(offers: &Vec<Offer>) -> Vec<SeatCount> {
+        let mut vec_number_seats = offers.clone();
         vec_number_seats.sort_by(|a, b| a.number_seats.cmp(&b.number_seats));
 
-        let seatCountVec = vec_number_seats
+        return vec_number_seats
             .chunk_by(|a, b| a.number_seats == b.number_seats)
             .map(|chunk| {
                 let number_seats = chunk.first().unwrap().number_seats;
@@ -345,62 +436,10 @@ impl DBManager {
                 }
             })
             .collect::<Vec<SeatCount>>();
-
-        //
-        // free kilometers slicing
-        //
-
-        // TODO: only once
-        // setup a list of offers
-
-        vec_offers_free_kilometers.sort_by(|a, b| a.free_kilometers.cmp(&b.free_kilometers));
-        let (head_free_km, tail_free_km) = vec_offers_free_kilometers.split_at(1);
-
-        // magic number access,
-        let first_km = head_free_km.first().unwrap();
-
-        let mut lower_bound_free_km =
-            first_km.free_kilometers + request_offer.min_free_kilometer_width;
-
-        let mut km_vec_vec: Vec<Vec<&Offer>> = vec![]; // i literally do not care
-        km_vec_vec.push(vec![first_km]);
-
-        for offer in tail_free_km {
-            if offer.free_kilometers < lower_bound_free_km {
-                km_vec_vec.last_mut().unwrap().push(offer);
-            } else {
-                lower_bound_free_km += request_offer.min_free_kilometer_width;
-                km_vec_vec.push(vec![offer]);
-            }
-        }
-
-        let free_kilometer_range_bucket = km_vec_vec
-            .iter()
-            .map(|a| {
-                let start = a.first().unwrap().free_kilometers;
-                let end = a.last().unwrap().free_kilometers;
-                let count = a.len() as u32;
-                FreeKilometerRange { start, end, count }
-            })
-            .collect();
-
-        return Ok(GetReponseBodyModel {
-            offers: paged_offers,
-            price_ranges: price_range_bucket,
-            car_type_counts: CarTypeCount {
-                small,
-                sports,
-                luxury,
-                family,
-            },
-            seats_count: seatCountVec,
-            free_kilometer_range: free_kilometer_range_bucket,
-            vollkasko_count: VollKaskoCount {
-                true_count,
-                false_count,
-            },
-        });
     }
+
+
+
 
     pub async fn cleanup(&self) -> Result<(), GenericError> {
         self.client.query("TRUNCATE TABLE offers").execute().await?;
