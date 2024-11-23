@@ -28,13 +28,25 @@ def parse_log_file(log_file_path, output_dir):
                         push_offers += (log_entry.get('log', [])["write_config"]["Offers"])
 
                     elif 'read' in request_type:
-                        read_offers.append(log_entry.get('log', [])['search_config'])
-                        wanted_cases.append(log_entry.get('log', [])['expected_result'])
-                        actual_cases.append(log_entry.get('log', [])['actual_result'])
-                        wanted = log_entry.get('log', [])['expected_result']
-                        actual = log_entry.get('log', [])['actual_result']
+                        entry = log_entry.get('log', [])
+                        read_offers.append(entry['search_config'])
+                        if "expected_result" not in entry:
+                            continue
+                        wanted_cases.append(entry['expected_result'])
+                        actual_cases.append(entry['actual_result'])
+                        wanted = entry['expected_result']
+                        actual = entry['actual_result']
                         if wanted != actual:
-                            failed_cases.append(log_entry.get('log', [])['search_config'])
+                            diff = {"input":[], "diff":[]}
+                            diff['input'].append(entry['search_config'])
+                            temp = []
+                            for key in wanted:
+                                if wanted[key] != actual[key]:
+                                    temp.append({"actual_"+key: actual[key], "wanted_"+key: wanted[key]})
+                            diff['diff'] += temp
+                            failed_cases.append(diff)
+
+
                 except json.JSONDecodeError:
                     continue
 
@@ -59,8 +71,8 @@ def parse_log_file(log_file_path, output_dir):
 
     except FileNotFoundError:
         print(f"Error: The file {log_file_path} was not found.")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+    #except Exception as e:
+     #   print(f"An unexpected error occurred: {e}")
 
 log_file_path = "logs/test.log"
 output_dir = "logs/test_inputs"
