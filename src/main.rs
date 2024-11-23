@@ -45,6 +45,8 @@ async fn api_post_response(
 
     let mut insert = manager.client.insert("offers")?;
 
+    println!("Inserting offers");
+
     for elem in iter {
         match elem {
             Ok(json_value) => {

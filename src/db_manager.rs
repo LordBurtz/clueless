@@ -297,14 +297,14 @@ impl DBManager {
 
         let paged_offers = Self::sortOrdersAndPaginate(filtered_offers, request_offer);
 
-        return Ok(GetReponseBodyModel {
+        Ok(GetReponseBodyModel {
             offers: paged_offers,
             price_ranges: price_range_bucket,
             car_type_counts: car_type_count2,
             seats_count: seatCountVec,
             free_kilometer_range: free_kilometer_bucket,
             vollkasko_count: vollkasko_count2,
-        });
+        })
     }
 
     fn get_car_type_count(
