@@ -247,7 +247,9 @@ impl DBManager {
         }
 
         let filtered_offers_count = filtered_offers.len() as u32;
-
+        println!("filtered_offers_count: {}", filtered_offers_count);
+        println!("offer size: {:?}", offers.len());
+        println!("car_type_filter_excl: {:?}", car_type_filter_excl.len());
         //
         // Count vollkasko and car type options
         //
