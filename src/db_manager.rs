@@ -248,7 +248,7 @@ impl DBManager {
         //
 
         let free_kilometer_range_bucket =
-            Self::toFreeKilometersOffers(offers.as_ref(), request_offer.price_range_width);
+            Self::toFreeKilometersOffers(offers.as_ref(), request_offer.min_free_kilometer_width);
 
 
         //
@@ -257,14 +257,6 @@ impl DBManager {
 
         let seatCountVec =
             Self::toSeatNumberOffers(offers.as_ref());
-
-
-        //
-        // calculate the different price range occurrences
-        //
-
-        let prince_range_bucket =
-            Self::toPriceRangesOffers(offers.as_ref(), request_offer.price_range_width);
 
 
         //
@@ -356,7 +348,7 @@ impl DBManager {
         // magic number access,
 
 
-        let mut lower_bound_free_km = (head.free_kilometers % min_free_kilometer_width) * min_free_kilometer_width;
+        let mut lower_bound_free_km = (head.free_kilometers / min_free_kilometer_width) * min_free_kilometer_width;
 
         // let mut lower_bound_free_km =
         //     first_km.free_kilometers + min_free_kilometer_width;
@@ -370,7 +362,8 @@ impl DBManager {
             if offer.free_kilometers < *end {
                 *count += 1
             } else {
-                lower_bound_free_km = (offer.free_kilometers % min_free_kilometer_width) * min_free_kilometer_width;
+                // TODO: helper method
+                lower_bound_free_km = (offer.free_kilometers / min_free_kilometer_width) * min_free_kilometer_width;
                 km_vec_vec.push(FreeKilometerRange{start: lower_bound_free_km, end:  lower_bound_free_km + min_free_kilometer_width, count: 0});
             }
         }
