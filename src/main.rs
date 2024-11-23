@@ -140,7 +140,7 @@ async fn main() -> Result<()> {
     db_manager.init().await?;
     populate_region_hierarchy(&db_manager).await?;
 
-    let addr: SocketAddr = "127.0.0.1:3000".parse().unwrap();
+    let addr: SocketAddr = "0.0.0.0:80".parse().unwrap();
 
     let listener = TcpListener::bind(&addr).await?;
     println!("Listening on http://{}", addr);
