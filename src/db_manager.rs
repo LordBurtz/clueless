@@ -410,7 +410,13 @@ impl DBManager {
     pub fn toPriceRangesOffers(offers: &Vec<Offer>, price_range_width: u32) -> Vec<PriceRange> {
         let mut vec_offers_price_range = offers.clone();
 
-        vec_offers_price_range.sort_by(|a, b| a.price.cmp(&b.price));
+        vec_offers_price_range.sort_by(|a, b| {
+            let comp = a.price.cmp(&b.price);
+            if comp.is_eq() {
+                return a.id.cmp(&b.id);
+            }
+            return comp;
+        });
         let (head_price_range, tail_price_range) = vec_offers_price_range.split_at(1);
 
         // magic number access,

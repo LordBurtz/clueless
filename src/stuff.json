@@ -1,216 +1,325 @@
 {
   "requestType": "PUSH",
-  "timestamp": "1732375983476468000",
+  "timestamp": "1732376708761384000",
   "log": {
-    "id": "3bba4847-11fd-41b7-956a-6a824cd341bc",
-    "start_time": "2024-11-23T15:33:03.476468Z",
-    "duration": 53.892,
+    "id": "df0b0aaa-a1a1-45ea-892f-ae55235ad097",
+    "start_time": "2024-11-23T15:45:08.761384Z",
+    "duration": 48.018,
     "write_config": {
-      "ID": "3bba4847-11fd-41b7-956a-6a824cd341bc",
+      "ID": "df0b0aaa-a1a1-45ea-892f-ae55235ad097",
       "Offers": [
         {
-          "OfferID": "28aec1a2-ea49-425d-b44e-f3bca5520d53",
-          "RegionID": 115,
-          "CarType": "family",
-          "NumberDays": 2,
-          "NumberSeats": 4,
-          "StartTimestamp": "2022-07-23T00:00:00Z",
-          "EndTimestamp": "2022-07-25T00:00:00Z",
-          "Price": 2974,
-          "HasVollkasko": false,
-          "FreeKilometers": 125
-        },
-        {
-          "OfferID": "610b0c94-d9d3-4c3c-83db-c13937b9cdb8",
-          "RegionID": 121,
+          "OfferID": "21f99ceb-5516-4cfb-830b-71f9bed42a9a",
+          "RegionID": 108,
           "CarType": "small",
           "NumberDays": 3,
-          "NumberSeats": 6,
-          "StartTimestamp": "2022-07-23T00:00:00Z",
-          "EndTimestamp": "2022-07-26T00:00:00Z",
-          "Price": 6230,
+          "NumberSeats": 2,
+          "StartTimestamp": "2024-09-10T00:00:00Z",
+          "EndTimestamp": "2024-09-13T00:00:00Z",
+          "Price": 2834,
           "HasVollkasko": false,
-          "FreeKilometers": 421
+          "FreeKilometers": 910
         },
         {
-          "OfferID": "5db3c46d-f797-40fd-a9ab-4b0381e8c9e2",
-          "RegionID": 89,
+          "OfferID": "fcb37f93-2538-48f5-988a-2b4e85152408",
+          "RegionID": 119,
           "CarType": "sports",
-          "NumberDays": 4,
-          "NumberSeats": 6,
-          "StartTimestamp": "2022-07-23T00:00:00Z",
-          "EndTimestamp": "2022-07-27T00:00:00Z",
-          "Price": 10378,
-          "HasVollkasko": true,
-          "FreeKilometers": 435
-        },
-        {
-          "OfferID": "fa64ec1c-62c8-482e-9761-9be63465716f",
-          "RegionID": 105,
-          "CarType": "small",
-          "NumberDays": 4,
+          "NumberDays": 3,
           "NumberSeats": 4,
-          "StartTimestamp": "2022-07-23T00:00:00Z",
-          "EndTimestamp": "2022-07-27T00:00:00Z",
-          "Price": 6231,
+          "StartTimestamp": "2024-09-09T00:00:00Z",
+          "EndTimestamp": "2024-09-12T00:00:00Z",
+          "Price": 8502,
           "HasVollkasko": true,
-          "FreeKilometers": 330
+          "FreeKilometers": 252
         },
         {
-          "OfferID": "083dc294-3e5a-4a17-a080-b26e9e33bd9f",
-          "RegionID": 113,
+          "OfferID": "1b28b8c9-3afe-400a-ab88-bc91602b11f9",
+          "RegionID": 117,
+          "CarType": "small",
+          "NumberDays": 3,
+          "NumberSeats": 3,
+          "StartTimestamp": "2024-09-10T00:00:00Z",
+          "EndTimestamp": "2024-09-13T00:00:00Z",
+          "Price": 5612,
+          "HasVollkasko": false,
+          "FreeKilometers": 163
+        },
+        {
+          "OfferID": "78b9f8c2-0b01-418b-9c33-48d4adccc210",
+          "RegionID": 124,
+          "CarType": "family",
+          "NumberDays": 2,
+          "NumberSeats": 3,
+          "StartTimestamp": "2024-09-09T00:00:00Z",
+          "EndTimestamp": "2024-09-11T00:00:00Z",
+          "Price": 12196,
+          "HasVollkasko": true,
+          "FreeKilometers": 558
+        },
+        {
+          "OfferID": "2f1a64e9-9a84-465b-b986-d2e134a29625",
+          "RegionID": 118,
           "CarType": "family",
           "NumberDays": 4,
-          "NumberSeats": 5,
-          "StartTimestamp": "2022-07-23T00:00:00Z",
-          "EndTimestamp": "2022-07-27T00:00:00Z",
-          "Price": 7164,
+          "NumberSeats": 3,
+          "StartTimestamp": "2024-09-09T00:00:00Z",
+          "EndTimestamp": "2024-09-13T00:00:00Z",
+          "Price": 1749,
           "HasVollkasko": false,
-          "FreeKilometers": 741
+          "FreeKilometers": 639
         },
         {
-          "OfferID": "b8ed3204-30b6-43db-a363-0ac48b514b5a",
-          "RegionID": 91,
-          "CarType": "luxury",
-          "NumberDays": 4,
-          "NumberSeats": 6,
-          "StartTimestamp": "2022-07-23T00:00:00Z",
-          "EndTimestamp": "2022-07-27T00:00:00Z",
-          "Price": 3362,
-          "HasVollkasko": true,
-          "FreeKilometers": 694
-        },
-        {
-          "OfferID": "b209ce27-cd43-4ab2-954a-2842eedd11f4",
+          "OfferID": "23fbf7cb-7b96-47f5-a3b7-c1956c8b5ca3",
           "RegionID": 95,
           "CarType": "small",
-          "NumberDays": 2,
-          "NumberSeats": 3,
-          "StartTimestamp": "2022-07-24T00:00:00Z",
-          "EndTimestamp": "2022-07-26T00:00:00Z",
-          "Price": 4331,
-          "HasVollkasko": true,
-          "FreeKilometers": 108
-        },
-        {
-          "OfferID": "0f13a949-c9a2-429a-9913-9b3480c99ae8",
-          "RegionID": 114,
-          "CarType": "small",
           "NumberDays": 3,
           "NumberSeats": 3,
-          "StartTimestamp": "2022-07-23T00:00:00Z",
-          "EndTimestamp": "2022-07-26T00:00:00Z",
-          "Price": 8392,
-          "HasVollkasko": true,
-          "FreeKilometers": 569
+          "StartTimestamp": "2024-09-10T00:00:00Z",
+          "EndTimestamp": "2024-09-13T00:00:00Z",
+          "Price": 14822,
+          "HasVollkasko": false,
+          "FreeKilometers": 230
         },
         {
-          "OfferID": "e35fb538-aabb-4f7f-81ff-c3b5af4e50cc",
-          "RegionID": 109,
+          "OfferID": "29f7a441-0bfb-48ff-a9f8-9063edd98d5f",
+          "RegionID": 66,
           "CarType": "family",
           "NumberDays": 2,
-          "NumberSeats": 4,
-          "StartTimestamp": "2022-07-24T00:00:00Z",
-          "EndTimestamp": "2022-07-26T00:00:00Z",
-          "Price": 5376,
+          "NumberSeats": 6,
+          "StartTimestamp": "2024-09-09T00:00:00Z",
+          "EndTimestamp": "2024-09-11T00:00:00Z",
+          "Price": 3860,
           "HasVollkasko": false,
-          "FreeKilometers": 278
+          "FreeKilometers": 898
         },
         {
-          "OfferID": "41a2f816-484e-4e8f-86bf-11b4b4c7649f",
-          "RegionID": 114,
+          "OfferID": "1b25766a-d6c4-4ac7-a304-b2f32d03a41f",
+          "RegionID": 57,
           "CarType": "sports",
-          "NumberDays": 4,
-          "NumberSeats": 3,
-          "StartTimestamp": "2022-07-23T00:00:00Z",
-          "EndTimestamp": "2022-07-27T00:00:00Z",
-          "Price": 3327,
+          "NumberDays": 3,
+          "NumberSeats": 5,
+          "StartTimestamp": "2024-09-10T00:00:00Z",
+          "EndTimestamp": "2024-09-13T00:00:00Z",
+          "Price": 2340,
           "HasVollkasko": true,
-          "FreeKilometers": 876
+          "FreeKilometers": 169
+        },
+        {
+          "OfferID": "690d0cc6-818c-4f2d-a0be-91375dfcf2a4",
+          "RegionID": 56,
+          "CarType": "luxury",
+          "NumberDays": 3,
+          "NumberSeats": 5,
+          "StartTimestamp": "2024-09-09T00:00:00Z",
+          "EndTimestamp": "2024-09-12T00:00:00Z",
+          "Price": 4281,
+          "HasVollkasko": false,
+          "FreeKilometers": 609
+        },
+        {
+          "OfferID": "0c24d11c-31df-4d0a-afd5-a38c0e1cb7a0",
+          "RegionID": 57,
+          "CarType": "luxury",
+          "NumberDays": 3,
+          "NumberSeats": 2,
+          "StartTimestamp": "2024-09-10T00:00:00Z",
+          "EndTimestamp": "2024-09-13T00:00:00Z",
+          "Price": 4383,
+          "HasVollkasko": false,
+          "FreeKilometers": 524
         }
       ]
     }
   }
 }
-
 {
   "requestType": "READ",
-  "timestamp": "1732375983526250000",
+  "timestamp": "1732376708806384000",
   "log": {
-    "id": "4619ff14-93a2-4838-9052-8bdfe85bb8d5",
-    "start_time": "2024-11-23T15:33:03.52625Z",
-    "duration": 32.847,
+    "id": "04a0c940-adaf-428f-b2fe-47d0f3a71e71",
+    "start_time": "2024-11-23T15:45:08.806384Z",
+    "duration": 24.149,
     "expected_result": {
-      "Offers": [],
-      "CarTypeCounts": {
-        "family": 0,
-        "luxury": 0,
-        "small": 0,
-        "sports": 0
-      },
-      "FreeKilometerRanges": [],
-      "PriceRanges": [],
-      "SeatsCounts": {},
-      "VollkaskoCount": {
-        "TrueCount": 0,
-        "FalseCount": 0
-      }
-    },
-    "actual_result": {
       "Offers": [
         {
-          "OfferID": "b209ce27-cd43-4ab2-954a-2842eedd11f4",
+          "OfferID": "1b25766a-d6c4-4ac7-a304-b2f32d03a41f",
           "IsDataCorrect": true
         },
         {
-          "OfferID": "e35fb538-aabb-4f7f-81ff-c3b5af4e50cc",
+          "OfferID": "21f99ceb-5516-4cfb-830b-71f9bed42a9a",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "0c24d11c-31df-4d0a-afd5-a38c0e1cb7a0",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "1b28b8c9-3afe-400a-ab88-bc91602b11f9",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "23fbf7cb-7b96-47f5-a3b7-c1956c8b5ca3",
           "IsDataCorrect": true
         }
       ],
       "CarTypeCounts": {
-        "family": 1,
-        "luxury": 0,
-        "small": 1,
-        "sports": 0
+        "family": 0,
+        "luxury": 1,
+        "small": 3,
+        "sports": 1
       },
       "FreeKilometerRanges": [
         {
-          "Start": 108,
-          "End": 108,
+          "Start": 150,
+          "End": 200,
+          "Count": 2
+        },
+        {
+          "Start": 200,
+          "End": 250,
           "Count": 1
         },
         {
-          "Start": 278,
-          "End": 278,
+          "Start": 500,
+          "End": 550,
+          "Count": 1
+        },
+        {
+          "Start": 900,
+          "End": 950,
           "Count": 1
         }
       ],
       "PriceRanges": [
         {
-          "Start": 4331,
-          "End": 4331,
+          "Start": 2340,
+          "End": 2350,
           "Count": 1
         },
         {
-          "Start": 5376,
-          "End": 5376,
+          "Start": 2830,
+          "End": 2840,
+          "Count": 1
+        },
+        {
+          "Start": 4380,
+          "End": 4390,
+          "Count": 1
+        },
+        {
+          "Start": 5610,
+          "End": 5620,
+          "Count": 1
+        },
+        {
+          "Start": 14820,
+          "End": 14830,
           "Count": 1
         }
       ],
       "SeatsCounts": {
-        "3": 1,
-        "4": 1
+        "2": 2,
+        "3": 2,
+        "5": 1
       },
       "VollkaskoCount": {
         "TrueCount": 1,
-        "FalseCount": 1
+        "FalseCount": 4
+      }
+    },
+    "actual_result": {
+      "Offers": [
+        {
+          "OfferID": "0c24d11c-31df-4d0a-afd5-a38c0e1cb7a0",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "21f99ceb-5516-4cfb-830b-71f9bed42a9a",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "1b28b8c9-3afe-400a-ab88-bc91602b11f9",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "23fbf7cb-7b96-47f5-a3b7-c1956c8b5ca3",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "1b25766a-d6c4-4ac7-a304-b2f32d03a41f",
+          "IsDataCorrect": true
+        }
+      ],
+      "CarTypeCounts": {
+        "family": 0,
+        "luxury": 1,
+        "small": 3,
+        "sports": 1
+      },
+      "FreeKilometerRanges": [
+        {
+          "Start": 163,
+          "End": 169,
+          "Count": 2
+        },
+        {
+          "Start": 230,
+          "End": 230,
+          "Count": 1
+        },
+        {
+          "Start": 524,
+          "End": 524,
+          "Count": 1
+        },
+        {
+          "Start": 910,
+          "End": 910,
+          "Count": 1
+        }
+      ],
+      "PriceRanges": [
+        {
+          "Start": 2340,
+          "End": 2340,
+          "Count": 1
+        },
+        {
+          "Start": 2834,
+          "End": 2834,
+          "Count": 1
+        },
+        {
+          "Start": 4383,
+          "End": 4383,
+          "Count": 1
+        },
+        {
+          "Start": 5612,
+          "End": 5612,
+          "Count": 1
+        },
+        {
+          "Start": 14822,
+          "End": 14822,
+          "Count": 1
+        }
+      ],
+      "SeatsCounts": {
+        "2": 2,
+        "3": 2,
+        "5": 1
+      },
+      "VollkaskoCount": {
+        "TrueCount": 1,
+        "FalseCount": 4
       }
     },
     "search_config": {
-      "ID": "4619ff14-93a2-4838-9052-8bdfe85bb8d5",
+      "ID": "04a0c940-adaf-428f-b2fe-47d0f3a71e71",
       "RegionID": 0,
-      "StartRange": "2022-07-24T00:00:00Z",
-      "EndRange": "2022-07-27T00:00:00Z",
+      "StartRange": "2024-09-10T00:00:00Z",
+      "EndRange": "2024-09-13T00:00:00Z",
       "NumberDays": 3,
       "CarType": null,
       "OnlyVollkasko": null,
@@ -230,274 +339,211 @@
 }
 {
   "requestType": "READ",
-  "timestamp": "1732375983526250000",
+  "timestamp": "1732376708806384000",
   "log": {
-    "id": "fe0da7c5-3e88-404b-b11a-42cd97183979",
-    "start_time": "2024-11-23T15:33:03.52625Z",
-    "duration": 51.475,
+    "id": "a20453d5-20b1-41fb-a864-ef9a6e476ea3",
+    "start_time": "2024-11-23T15:45:08.806384Z",
+    "duration": 24.921,
     "expected_result": {
       "Offers": [
         {
-          "OfferID": "41a2f816-484e-4e8f-86bf-11b4b4c7649f",
-          "IsDataCorrect": true
-        },
-        {
-          "OfferID": "b8ed3204-30b6-43db-a363-0ac48b514b5a",
-          "IsDataCorrect": true
-        },
-        {
-          "OfferID": "fa64ec1c-62c8-482e-9761-9be63465716f",
-          "IsDataCorrect": true
-        },
-        {
-          "OfferID": "083dc294-3e5a-4a17-a080-b26e9e33bd9f",
-          "IsDataCorrect": true
-        },
-        {
-          "OfferID": "5db3c46d-f797-40fd-a9ab-4b0381e8c9e2",
+          "OfferID": "2f1a64e9-9a84-465b-b986-d2e134a29625",
           "IsDataCorrect": true
         }
       ],
       "CarTypeCounts": {
         "family": 1,
-        "luxury": 1,
-        "small": 1,
-        "sports": 2
+        "luxury": 0,
+        "small": 0,
+        "sports": 0
       },
       "FreeKilometerRanges": [
         {
-          "Start": 300,
-          "End": 350,
-          "Count": 1
-        },
-        {
-          "Start": 400,
-          "End": 450,
-          "Count": 1
-        },
-        {
-          "Start": 650,
-          "End": 700,
-          "Count": 1
-        },
-        {
-          "Start": 700,
-          "End": 750,
-          "Count": 1
-        },
-        {
-          "Start": 850,
-          "End": 900,
+          "Start": 600,
+          "End": 650,
           "Count": 1
         }
       ],
       "PriceRanges": [
         {
-          "Start": 3320,
-          "End": 3330,
-          "Count": 1
-        },
-        {
-          "Start": 3360,
-          "End": 3370,
-          "Count": 1
-        },
-        {
-          "Start": 6230,
-          "End": 6240,
-          "Count": 1
-        },
-        {
-          "Start": 7160,
-          "End": 7170,
-          "Count": 1
-        },
-        {
-          "Start": 10370,
-          "End": 10380,
+          "Start": 1740,
+          "End": 1750,
           "Count": 1
         }
       ],
       "SeatsCounts": {
-        "3": 1,
-        "4": 1,
-        "5": 1,
-        "6": 2
+        "3": 1
       },
       "VollkaskoCount": {
-        "TrueCount": 4,
+        "TrueCount": 0,
         "FalseCount": 1
       }
     },
     "actual_result": {
       "Offers": [
         {
-          "OfferID": "0f13a949-c9a2-429a-9913-9b3480c99ae8",
+          "OfferID": "0c24d11c-31df-4d0a-afd5-a38c0e1cb7a0",
           "IsDataCorrect": true
         },
         {
-          "OfferID": "41a2f816-484e-4e8f-86bf-11b4b4c7649f",
+          "OfferID": "21f99ceb-5516-4cfb-830b-71f9bed42a9a",
           "IsDataCorrect": true
         },
         {
-          "OfferID": "b209ce27-cd43-4ab2-954a-2842eedd11f4",
+          "OfferID": "1b28b8c9-3afe-400a-ab88-bc91602b11f9",
           "IsDataCorrect": true
         },
         {
-          "OfferID": "28aec1a2-ea49-425d-b44e-f3bca5520d53",
+          "OfferID": "23fbf7cb-7b96-47f5-a3b7-c1956c8b5ca3",
           "IsDataCorrect": true
         },
         {
-          "OfferID": "e35fb538-aabb-4f7f-81ff-c3b5af4e50cc",
+          "OfferID": "2f1a64e9-9a84-465b-b986-d2e134a29625",
           "IsDataCorrect": true
         },
         {
-          "OfferID": "fa64ec1c-62c8-482e-9761-9be63465716f",
+          "OfferID": "78b9f8c2-0b01-418b-9c33-48d4adccc210",
           "IsDataCorrect": true
         },
         {
-          "OfferID": "083dc294-3e5a-4a17-a080-b26e9e33bd9f",
+          "OfferID": "fcb37f93-2538-48f5-988a-2b4e85152408",
           "IsDataCorrect": true
         },
         {
-          "OfferID": "5db3c46d-f797-40fd-a9ab-4b0381e8c9e2",
+          "OfferID": "1b25766a-d6c4-4ac7-a304-b2f32d03a41f",
           "IsDataCorrect": true
         },
         {
-          "OfferID": "610b0c94-d9d3-4c3c-83db-c13937b9cdb8",
+          "OfferID": "690d0cc6-818c-4f2d-a0be-91375dfcf2a4",
           "IsDataCorrect": true
         },
         {
-          "OfferID": "b8ed3204-30b6-43db-a363-0ac48b514b5a",
+          "OfferID": "29f7a441-0bfb-48ff-a9f8-9063edd98d5f",
           "IsDataCorrect": true
         }
       ],
       "CarTypeCounts": {
         "family": 3,
-        "luxury": 1,
-        "small": 4,
+        "luxury": 2,
+        "small": 3,
         "sports": 2
       },
       "FreeKilometerRanges": [
         {
-          "Start": 108,
-          "End": 108,
+          "Start": 163,
+          "End": 169,
+          "Count": 2
+        },
+        {
+          "Start": 230,
+          "End": 230,
           "Count": 1
         },
         {
-          "Start": 125,
-          "End": 125,
+          "Start": 252,
+          "End": 252,
           "Count": 1
         },
         {
-          "Start": 278,
-          "End": 278,
+          "Start": 524,
+          "End": 524,
           "Count": 1
         },
         {
-          "Start": 330,
-          "End": 330,
+          "Start": 558,
+          "End": 558,
           "Count": 1
         },
         {
-          "Start": 421,
-          "End": 421,
+          "Start": 609,
+          "End": 609,
           "Count": 1
         },
         {
-          "Start": 435,
-          "End": 435,
+          "Start": 639,
+          "End": 639,
           "Count": 1
         },
         {
-          "Start": 569,
-          "End": 569,
+          "Start": 898,
+          "End": 898,
           "Count": 1
         },
         {
-          "Start": 694,
-          "End": 694,
-          "Count": 1
-        },
-        {
-          "Start": 741,
-          "End": 741,
-          "Count": 1
-        },
-        {
-          "Start": 876,
-          "End": 876,
+          "Start": 910,
+          "End": 910,
           "Count": 1
         }
       ],
       "PriceRanges": [
         {
-          "Start": 2974,
-          "End": 2974,
+          "Start": 1749,
+          "End": 1749,
           "Count": 1
         },
         {
-          "Start": 3327,
-          "End": 3327,
+          "Start": 2340,
+          "End": 2340,
           "Count": 1
         },
         {
-          "Start": 3362,
-          "End": 3362,
+          "Start": 2834,
+          "End": 2834,
           "Count": 1
         },
         {
-          "Start": 4331,
-          "End": 4331,
+          "Start": 3860,
+          "End": 3860,
           "Count": 1
         },
         {
-          "Start": 5376,
-          "End": 5376,
+          "Start": 4281,
+          "End": 4281,
           "Count": 1
         },
         {
-          "Start": 6230,
-          "End": 6230,
+          "Start": 4383,
+          "End": 4383,
           "Count": 1
         },
         {
-          "Start": 6231,
-          "End": 6231,
+          "Start": 5612,
+          "End": 5612,
           "Count": 1
         },
         {
-          "Start": 7164,
-          "End": 7164,
+          "Start": 8502,
+          "End": 8502,
           "Count": 1
         },
         {
-          "Start": 8392,
-          "End": 8392,
+          "Start": 12196,
+          "End": 12196,
           "Count": 1
         },
         {
-          "Start": 10378,
-          "End": 10378,
+          "Start": 14822,
+          "End": 14822,
           "Count": 1
         }
       ],
       "SeatsCounts": {
-        "3": 3,
-        "4": 3,
-        "5": 1,
-        "6": 3
+        "2": 2,
+        "3": 4,
+        "4": 1,
+        "5": 2,
+        "6": 1
       },
       "VollkaskoCount": {
-        "TrueCount": 6,
-        "FalseCount": 4
+        "TrueCount": 3,
+        "FalseCount": 7
       }
     },
     "search_config": {
-      "ID": "fe0da7c5-3e88-404b-b11a-42cd97183979",
+      "ID": "a20453d5-20b1-41fb-a864-ef9a6e476ea3",
       "RegionID": 0,
-      "StartRange": "2022-07-23T00:00:00Z",
-      "EndRange": "2022-07-27T00:00:00Z",
+      "StartRange": "2024-09-09T00:00:00Z",
+      "EndRange": "2024-09-13T00:00:00Z",
       "NumberDays": 4,
       "CarType": null,
       "OnlyVollkasko": null,
@@ -517,55 +563,632 @@
 }
 {
   "requestType": "READ",
-  "timestamp": "1732375983526250000",
+  "timestamp": "1732376708821350000",
   "log": {
-    "id": "b35e9241-f288-44c5-b58d-75f92c8d5c2a",
-    "start_time": "2024-11-23T15:33:03.52625Z",
-    "duration": 32.73,
+    "id": "806de25e-c79b-41ae-a6a4-227d6a66882b",
+    "start_time": "2024-11-23T15:45:08.82135Z",
+    "duration": 30.323,
     "expected_result": {
       "Offers": [
         {
-          "OfferID": "b209ce27-cd43-4ab2-954a-2842eedd11f4",
+          "OfferID": "29f7a441-0bfb-48ff-a9f8-9063edd98d5f",
           "IsDataCorrect": true
         },
         {
-          "OfferID": "e35fb538-aabb-4f7f-81ff-c3b5af4e50cc",
+          "OfferID": "78b9f8c2-0b01-418b-9c33-48d4adccc210",
+          "IsDataCorrect": true
+        }
+      ],
+      "CarTypeCounts": {
+        "family": 2,
+        "luxury": 0,
+        "small": 0,
+        "sports": 0
+      },
+      "FreeKilometerRanges": [
+        {
+          "Start": 550,
+          "End": 600,
+          "Count": 1
+        },
+        {
+          "Start": 850,
+          "End": 900,
+          "Count": 1
+        }
+      ],
+      "PriceRanges": [
+        {
+          "Start": 3860,
+          "End": 3870,
+          "Count": 1
+        },
+        {
+          "Start": 12190,
+          "End": 12200,
+          "Count": 1
+        }
+      ],
+      "SeatsCounts": {
+        "3": 1,
+        "6": 1
+      },
+      "VollkaskoCount": {
+        "TrueCount": 1,
+        "FalseCount": 1
+      }
+    },
+    "actual_result": {
+      "Offers": [
+        {
+          "OfferID": "78b9f8c2-0b01-418b-9c33-48d4adccc210",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "29f7a441-0bfb-48ff-a9f8-9063edd98d5f",
+          "IsDataCorrect": true
+        }
+      ],
+      "CarTypeCounts": {
+        "family": 2,
+        "luxury": 0,
+        "small": 0,
+        "sports": 0
+      },
+      "FreeKilometerRanges": [
+        {
+          "Start": 558,
+          "End": 558,
+          "Count": 1
+        },
+        {
+          "Start": 898,
+          "End": 898,
+          "Count": 1
+        }
+      ],
+      "PriceRanges": [
+        {
+          "Start": 3860,
+          "End": 3860,
+          "Count": 1
+        },
+        {
+          "Start": 12196,
+          "End": 12196,
+          "Count": 1
+        }
+      ],
+      "SeatsCounts": {
+        "3": 1,
+        "6": 1
+      },
+      "VollkaskoCount": {
+        "TrueCount": 1,
+        "FalseCount": 1
+      }
+    },
+    "search_config": {
+      "ID": "806de25e-c79b-41ae-a6a4-227d6a66882b",
+      "RegionID": 0,
+      "StartRange": "2024-09-09T00:00:00Z",
+      "EndRange": "2024-09-11T00:00:00Z",
+      "NumberDays": 2,
+      "CarType": null,
+      "OnlyVollkasko": null,
+      "MinFreeKilometer": null,
+      "MinNumberSeats": null,
+      "MinPrice": null,
+      "MaxPrice": null,
+      "Pagination": {
+        "Page": 0,
+        "PageSize": 100
+      },
+      "Order": "price-asc",
+      "PriceBucketWidth": 10,
+      "FreeKmBucketWidth": 50
+    }
+  }
+}
+{
+  "requestType": "READ",
+  "timestamp": "1732376708826350000",
+  "log": {
+    "id": "45496934-c529-4444-a25b-95012016b9ce",
+    "start_time": "2024-11-23T15:45:08.82635Z",
+    "duration": 32.081,
+    "expected_result": {
+      "Offers": [
+        {
+          "OfferID": "2f1a64e9-9a84-465b-b986-d2e134a29625",
           "IsDataCorrect": true
         }
       ],
       "CarTypeCounts": {
         "family": 1,
         "luxury": 0,
-        "small": 1,
+        "small": 0,
         "sports": 0
       },
       "FreeKilometerRanges": [
         {
-          "Start": 100,
-          "End": 150,
+          "Start": 600,
+          "End": 650,
+          "Count": 1
+        }
+      ],
+      "PriceRanges": [
+        {
+          "Start": 1740,
+          "End": 1750,
+          "Count": 1
+        }
+      ],
+      "SeatsCounts": {
+        "3": 1
+      },
+      "VollkaskoCount": {
+        "TrueCount": 0,
+        "FalseCount": 1
+      }
+    },
+    "actual_result": {
+      "Offers": [
+        {
+          "OfferID": "0c24d11c-31df-4d0a-afd5-a38c0e1cb7a0",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "21f99ceb-5516-4cfb-830b-71f9bed42a9a",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "1b28b8c9-3afe-400a-ab88-bc91602b11f9",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "23fbf7cb-7b96-47f5-a3b7-c1956c8b5ca3",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "2f1a64e9-9a84-465b-b986-d2e134a29625",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "78b9f8c2-0b01-418b-9c33-48d4adccc210",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "fcb37f93-2538-48f5-988a-2b4e85152408",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "1b25766a-d6c4-4ac7-a304-b2f32d03a41f",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "690d0cc6-818c-4f2d-a0be-91375dfcf2a4",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "29f7a441-0bfb-48ff-a9f8-9063edd98d5f",
+          "IsDataCorrect": true
+        }
+      ],
+      "CarTypeCounts": {
+        "family": 3,
+        "luxury": 2,
+        "small": 3,
+        "sports": 2
+      },
+      "FreeKilometerRanges": [
+        {
+          "Start": 163,
+          "End": 169,
+          "Count": 2
+        },
+        {
+          "Start": 230,
+          "End": 230,
           "Count": 1
         },
+        {
+          "Start": 252,
+          "End": 252,
+          "Count": 1
+        },
+        {
+          "Start": 524,
+          "End": 524,
+          "Count": 1
+        },
+        {
+          "Start": 558,
+          "End": 558,
+          "Count": 1
+        },
+        {
+          "Start": 609,
+          "End": 609,
+          "Count": 1
+        },
+        {
+          "Start": 639,
+          "End": 639,
+          "Count": 1
+        },
+        {
+          "Start": 898,
+          "End": 898,
+          "Count": 1
+        },
+        {
+          "Start": 910,
+          "End": 910,
+          "Count": 1
+        }
+      ],
+      "PriceRanges": [
+        {
+          "Start": 1749,
+          "End": 1749,
+          "Count": 1
+        },
+        {
+          "Start": 2340,
+          "End": 2340,
+          "Count": 1
+        },
+        {
+          "Start": 2834,
+          "End": 2834,
+          "Count": 1
+        },
+        {
+          "Start": 3860,
+          "End": 3860,
+          "Count": 1
+        },
+        {
+          "Start": 4281,
+          "End": 4281,
+          "Count": 1
+        },
+        {
+          "Start": 4383,
+          "End": 4383,
+          "Count": 1
+        },
+        {
+          "Start": 5612,
+          "End": 5612,
+          "Count": 1
+        },
+        {
+          "Start": 8502,
+          "End": 8502,
+          "Count": 1
+        },
+        {
+          "Start": 12196,
+          "End": 12196,
+          "Count": 1
+        },
+        {
+          "Start": 14822,
+          "End": 14822,
+          "Count": 1
+        }
+      ],
+      "SeatsCounts": {
+        "2": 2,
+        "3": 4,
+        "4": 1,
+        "5": 2,
+        "6": 1
+      },
+      "VollkaskoCount": {
+        "TrueCount": 3,
+        "FalseCount": 7
+      }
+    },
+    "search_config": {
+      "ID": "45496934-c529-4444-a25b-95012016b9ce",
+      "RegionID": 0,
+      "StartRange": "2024-09-09T00:00:00Z",
+      "EndRange": "2024-09-13T00:00:00Z",
+      "NumberDays": 4,
+      "CarType": null,
+      "OnlyVollkasko": null,
+      "MinFreeKilometer": null,
+      "MinNumberSeats": null,
+      "MinPrice": null,
+      "MaxPrice": null,
+      "Pagination": {
+        "Page": 0,
+        "PageSize": 100
+      },
+      "Order": "price-asc",
+      "PriceBucketWidth": 10,
+      "FreeKmBucketWidth": 50
+    }
+  }
+}
+{
+  "requestType": "READ",
+  "timestamp": "1732376708831350000",
+  "log": {
+    "id": "79574cde-7be5-46cf-a139-ea64e91427ad",
+    "start_time": "2024-11-23T15:45:08.83135Z",
+    "duration": 25.911,
+    "expected_result": {
+      "Offers": [
+        {
+          "OfferID": "2f1a64e9-9a84-465b-b986-d2e134a29625",
+          "IsDataCorrect": true
+        }
+      ],
+      "CarTypeCounts": {
+        "family": 1,
+        "luxury": 0,
+        "small": 0,
+        "sports": 0
+      },
+      "FreeKilometerRanges": [
+        {
+          "Start": 600,
+          "End": 650,
+          "Count": 1
+        }
+      ],
+      "PriceRanges": [
+        {
+          "Start": 1740,
+          "End": 1750,
+          "Count": 1
+        }
+      ],
+      "SeatsCounts": {
+        "3": 1
+      },
+      "VollkaskoCount": {
+        "TrueCount": 0,
+        "FalseCount": 1
+      }
+    },
+    "actual_result": {
+      "Offers": [
+        {
+          "OfferID": "0c24d11c-31df-4d0a-afd5-a38c0e1cb7a0",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "21f99ceb-5516-4cfb-830b-71f9bed42a9a",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "1b28b8c9-3afe-400a-ab88-bc91602b11f9",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "23fbf7cb-7b96-47f5-a3b7-c1956c8b5ca3",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "2f1a64e9-9a84-465b-b986-d2e134a29625",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "78b9f8c2-0b01-418b-9c33-48d4adccc210",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "fcb37f93-2538-48f5-988a-2b4e85152408",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "1b25766a-d6c4-4ac7-a304-b2f32d03a41f",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "690d0cc6-818c-4f2d-a0be-91375dfcf2a4",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "29f7a441-0bfb-48ff-a9f8-9063edd98d5f",
+          "IsDataCorrect": true
+        }
+      ],
+      "CarTypeCounts": {
+        "family": 3,
+        "luxury": 2,
+        "small": 3,
+        "sports": 2
+      },
+      "FreeKilometerRanges": [
+        {
+          "Start": 163,
+          "End": 169,
+          "Count": 2
+        },
+        {
+          "Start": 230,
+          "End": 230,
+          "Count": 1
+        },
+        {
+          "Start": 252,
+          "End": 252,
+          "Count": 1
+        },
+        {
+          "Start": 524,
+          "End": 524,
+          "Count": 1
+        },
+        {
+          "Start": 558,
+          "End": 558,
+          "Count": 1
+        },
+        {
+          "Start": 609,
+          "End": 609,
+          "Count": 1
+        },
+        {
+          "Start": 639,
+          "End": 639,
+          "Count": 1
+        },
+        {
+          "Start": 898,
+          "End": 898,
+          "Count": 1
+        },
+        {
+          "Start": 910,
+          "End": 910,
+          "Count": 1
+        }
+      ],
+      "PriceRanges": [
+        {
+          "Start": 1749,
+          "End": 1749,
+          "Count": 1
+        },
+        {
+          "Start": 2340,
+          "End": 2340,
+          "Count": 1
+        },
+        {
+          "Start": 2834,
+          "End": 2834,
+          "Count": 1
+        },
+        {
+          "Start": 3860,
+          "End": 3860,
+          "Count": 1
+        },
+        {
+          "Start": 4281,
+          "End": 4281,
+          "Count": 1
+        },
+        {
+          "Start": 4383,
+          "End": 4383,
+          "Count": 1
+        },
+        {
+          "Start": 5612,
+          "End": 5612,
+          "Count": 1
+        },
+        {
+          "Start": 8502,
+          "End": 8502,
+          "Count": 1
+        },
+        {
+          "Start": 12196,
+          "End": 12196,
+          "Count": 1
+        },
+        {
+          "Start": 14822,
+          "End": 14822,
+          "Count": 1
+        }
+      ],
+      "SeatsCounts": {
+        "2": 2,
+        "3": 4,
+        "4": 1,
+        "5": 2,
+        "6": 1
+      },
+      "VollkaskoCount": {
+        "TrueCount": 3,
+        "FalseCount": 7
+      }
+    },
+    "search_config": {
+      "ID": "79574cde-7be5-46cf-a139-ea64e91427ad",
+      "RegionID": 0,
+      "StartRange": "2024-09-09T00:00:00Z",
+      "EndRange": "2024-09-13T00:00:00Z",
+      "NumberDays": 4,
+      "CarType": null,
+      "OnlyVollkasko": null,
+      "MinFreeKilometer": null,
+      "MinNumberSeats": null,
+      "MinPrice": null,
+      "MaxPrice": null,
+      "Pagination": {
+        "Page": 0,
+        "PageSize": 100
+      },
+      "Order": "price-asc",
+      "PriceBucketWidth": 10,
+      "FreeKmBucketWidth": 50
+    }
+  }
+}
+{
+  "requestType": "READ",
+  "timestamp": "1732376708851350000",
+  "log": {
+    "id": "349329d3-057f-4650-975d-2b928a4af6dc",
+    "start_time": "2024-11-23T15:45:08.85135Z",
+    "duration": 13.951,
+    "expected_result": {
+      "Offers": [
+        {
+          "OfferID": "690d0cc6-818c-4f2d-a0be-91375dfcf2a4",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "fcb37f93-2538-48f5-988a-2b4e85152408",
+          "IsDataCorrect": true
+        }
+      ],
+      "CarTypeCounts": {
+        "family": 0,
+        "luxury": 1,
+        "small": 0,
+        "sports": 1
+      },
+      "FreeKilometerRanges": [
         {
           "Start": 250,
           "End": 300,
           "Count": 1
+        },
+        {
+          "Start": 600,
+          "End": 650,
+          "Count": 1
         }
       ],
       "PriceRanges": [
         {
-          "Start": 4330,
-          "End": 4340,
+          "Start": 4280,
+          "End": 4290,
           "Count": 1
         },
         {
-          "Start": 5370,
-          "End": 5380,
+          "Start": 8500,
+          "End": 8510,
           "Count": 1
         }
       ],
       "SeatsCounts": {
-        "3": 1,
-        "4": 1
+        "4": 1,
+        "5": 1
       },
       "VollkaskoCount": {
         "TrueCount": 1,
@@ -575,153 +1198,88 @@
     "actual_result": {
       "Offers": [
         {
-          "OfferID": "b209ce27-cd43-4ab2-954a-2842eedd11f4",
+          "OfferID": "78b9f8c2-0b01-418b-9c33-48d4adccc210",
           "IsDataCorrect": true
         },
         {
-          "OfferID": "e35fb538-aabb-4f7f-81ff-c3b5af4e50cc",
+          "OfferID": "fcb37f93-2538-48f5-988a-2b4e85152408",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "690d0cc6-818c-4f2d-a0be-91375dfcf2a4",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "29f7a441-0bfb-48ff-a9f8-9063edd98d5f",
           "IsDataCorrect": true
         }
       ],
       "CarTypeCounts": {
-        "family": 1,
-        "luxury": 0,
-        "small": 1,
-        "sports": 0
-      },
-      "FreeKilometerRanges": [
-        {
-          "Start": 108,
-          "End": 108,
-          "Count": 1
-        },
-        {
-          "Start": 278,
-          "End": 278,
-          "Count": 1
-        }
-      ],
-      "PriceRanges": [
-        {
-          "Start": 4331,
-          "End": 4331,
-          "Count": 1
-        },
-        {
-          "Start": 5376,
-          "End": 5376,
-          "Count": 1
-        }
-      ],
-      "SeatsCounts": {
-        "3": 1,
-        "4": 1
-      },
-      "VollkaskoCount": {
-        "TrueCount": 1,
-        "FalseCount": 1
-      }
-    },
-    "search_config": {
-      "ID": "b35e9241-f288-44c5-b58d-75f92c8d5c2a",
-      "RegionID": 0,
-      "StartRange": "2022-07-24T00:00:00Z",
-      "EndRange": "2022-07-26T00:00:00Z",
-      "NumberDays": 2,
-      "CarType": null,
-      "OnlyVollkasko": null,
-      "MinFreeKilometer": null,
-      "MinNumberSeats": null,
-      "MinPrice": null,
-      "MaxPrice": null,
-      "Pagination": {
-        "Page": 0,
-        "PageSize": 100
-      },
-      "Order": "price-asc",
-      "PriceBucketWidth": 10,
-      "FreeKmBucketWidth": 50
-    }
-  }
-}
-{
-  "requestType": "READ",
-  "timestamp": "1732375983526250000",
-  "log": {
-    "id": "d1e51248-fcaf-4aec-8c62-9f51b5988ee0",
-    "start_time": "2024-11-23T15:33:03.52625Z",
-    "duration": 35.108,
-    "expected_result": {
-      "Offers": [],
-      "CarTypeCounts": {
-        "family": 0,
-        "luxury": 0,
+        "family": 2,
+        "luxury": 1,
         "small": 0,
-        "sports": 0
-      },
-      "FreeKilometerRanges": [],
-      "PriceRanges": [],
-      "SeatsCounts": {},
-      "VollkaskoCount": {
-        "TrueCount": 0,
-        "FalseCount": 0
-      }
-    },
-    "actual_result": {
-      "Offers": [
-        {
-          "OfferID": "b209ce27-cd43-4ab2-954a-2842eedd11f4",
-          "IsDataCorrect": true
-        },
-        {
-          "OfferID": "e35fb538-aabb-4f7f-81ff-c3b5af4e50cc",
-          "IsDataCorrect": true
-        }
-      ],
-      "CarTypeCounts": {
-        "family": 1,
-        "luxury": 0,
-        "small": 1,
-        "sports": 0
+        "sports": 1
       },
       "FreeKilometerRanges": [
         {
-          "Start": 108,
-          "End": 108,
+          "Start": 252,
+          "End": 252,
           "Count": 1
         },
         {
-          "Start": 278,
-          "End": 278,
+          "Start": 558,
+          "End": 558,
+          "Count": 1
+        },
+        {
+          "Start": 609,
+          "End": 609,
+          "Count": 1
+        },
+        {
+          "Start": 898,
+          "End": 898,
           "Count": 1
         }
       ],
       "PriceRanges": [
         {
-          "Start": 4331,
-          "End": 4331,
+          "Start": 3860,
+          "End": 3860,
           "Count": 1
         },
         {
-          "Start": 5376,
-          "End": 5376,
+          "Start": 4281,
+          "End": 4281,
+          "Count": 1
+        },
+        {
+          "Start": 8502,
+          "End": 8502,
+          "Count": 1
+        },
+        {
+          "Start": 12196,
+          "End": 12196,
           "Count": 1
         }
       ],
       "SeatsCounts": {
         "3": 1,
-        "4": 1
+        "4": 1,
+        "5": 1,
+        "6": 1
       },
       "VollkaskoCount": {
-        "TrueCount": 1,
-        "FalseCount": 1
+        "TrueCount": 2,
+        "FalseCount": 2
       }
     },
     "search_config": {
-      "ID": "d1e51248-fcaf-4aec-8c62-9f51b5988ee0",
+      "ID": "349329d3-057f-4650-975d-2b928a4af6dc",
       "RegionID": 0,
-      "StartRange": "2022-07-24T00:00:00Z",
-      "EndRange": "2022-07-27T00:00:00Z",
+      "StartRange": "2024-09-09T00:00:00Z",
+      "EndRange": "2024-09-12T00:00:00Z",
       "NumberDays": 3,
       "CarType": null,
       "OnlyVollkasko": null,
@@ -741,466 +1299,146 @@
 }
 {
   "requestType": "READ",
-  "timestamp": "1732375983556250000",
+  "timestamp": "1732376708851350000",
   "log": {
-    "id": "818a8104-9f9a-4de7-9eeb-ed0d7e713026",
-    "start_time": "2024-11-23T15:33:03.55625Z",
-    "duration": 33.284,
+    "id": "714cb616-a12e-4c0b-bc09-8ee8f6f752cf",
+    "start_time": "2024-11-23T15:45:08.85135Z",
+    "duration": 14.758,
     "expected_result": {
-      "Offers": [],
-      "CarTypeCounts": {
-        "family": 0,
-        "luxury": 0,
-        "small": 0,
-        "sports": 0
-      },
-      "FreeKilometerRanges": [],
-      "PriceRanges": [],
-      "SeatsCounts": {},
-      "VollkaskoCount": {
-        "TrueCount": 0,
-        "FalseCount": 0
-      }
-    },
-    "actual_result": {
       "Offers": [
         {
-          "OfferID": "b209ce27-cd43-4ab2-954a-2842eedd11f4",
+          "OfferID": "690d0cc6-818c-4f2d-a0be-91375dfcf2a4",
           "IsDataCorrect": true
         },
         {
-          "OfferID": "e35fb538-aabb-4f7f-81ff-c3b5af4e50cc",
+          "OfferID": "fcb37f93-2538-48f5-988a-2b4e85152408",
           "IsDataCorrect": true
         }
       ],
       "CarTypeCounts": {
-        "family": 1,
-        "luxury": 0,
-        "small": 1,
-        "sports": 0
+        "family": 0,
+        "luxury": 1,
+        "small": 0,
+        "sports": 1
       },
       "FreeKilometerRanges": [
         {
-          "Start": 108,
-          "End": 108,
+          "Start": 250,
+          "End": 300,
           "Count": 1
         },
         {
-          "Start": 278,
-          "End": 278,
+          "Start": 600,
+          "End": 650,
           "Count": 1
         }
       ],
       "PriceRanges": [
         {
-          "Start": 4331,
-          "End": 4331,
+          "Start": 4280,
+          "End": 4290,
           "Count": 1
         },
         {
-          "Start": 5376,
-          "End": 5376,
+          "Start": 8500,
+          "End": 8510,
           "Count": 1
         }
       ],
       "SeatsCounts": {
-        "3": 1,
-        "4": 1
+        "4": 1,
+        "5": 1
       },
       "VollkaskoCount": {
         "TrueCount": 1,
         "FalseCount": 1
       }
     },
-    "search_config": {
-      "ID": "818a8104-9f9a-4de7-9eeb-ed0d7e713026",
-      "RegionID": 0,
-      "StartRange": "2022-07-24T00:00:00Z",
-      "EndRange": "2022-07-27T00:00:00Z",
-      "NumberDays": 3,
-      "CarType": null,
-      "OnlyVollkasko": null,
-      "MinFreeKilometer": null,
-      "MinNumberSeats": null,
-      "MinPrice": null,
-      "MaxPrice": null,
-      "Pagination": {
-        "Page": 0,
-        "PageSize": 100
-      },
-      "Order": "price-asc",
-      "PriceBucketWidth": 10,
-      "FreeKmBucketWidth": 50
-    }
-  }
-}
-{
-  "requestType": "READ",
-  "timestamp": "1732375983556250000",
-  "log": {
-    "id": "6643f292-f49f-463b-836a-197442652db9",
-    "start_time": "2024-11-23T15:33:03.55625Z",
-    "duration": 20.725,
-    "expected_result": {
-      "Offers": [
-        {
-          "OfferID": "28aec1a2-ea49-425d-b44e-f3bca5520d53",
-          "IsDataCorrect": true
-        }
-      ],
-      "CarTypeCounts": {
-        "family": 1,
-        "luxury": 0,
-        "small": 0,
-        "sports": 0
-      },
-      "FreeKilometerRanges": [
-        {
-          "Start": 100,
-          "End": 150,
-          "Count": 1
-        }
-      ],
-      "PriceRanges": [
-        {
-          "Start": 2970,
-          "End": 2980,
-          "Count": 1
-        }
-      ],
-      "SeatsCounts": {
-        "4": 1
-      },
-      "VollkaskoCount": {
-        "TrueCount": 0,
-        "FalseCount": 1
-      }
-    },
     "actual_result": {
       "Offers": [
         {
-          "OfferID": "28aec1a2-ea49-425d-b44e-f3bca5520d53",
+          "OfferID": "78b9f8c2-0b01-418b-9c33-48d4adccc210",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "fcb37f93-2538-48f5-988a-2b4e85152408",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "690d0cc6-818c-4f2d-a0be-91375dfcf2a4",
+          "IsDataCorrect": true
+        },
+        {
+          "OfferID": "29f7a441-0bfb-48ff-a9f8-9063edd98d5f",
           "IsDataCorrect": true
         }
       ],
       "CarTypeCounts": {
-        "family": 1,
-        "luxury": 0,
+        "family": 2,
+        "luxury": 1,
         "small": 0,
-        "sports": 0
+        "sports": 1
       },
       "FreeKilometerRanges": [
         {
-          "Start": 125,
-          "End": 125,
+          "Start": 252,
+          "End": 252,
+          "Count": 1
+        },
+        {
+          "Start": 558,
+          "End": 558,
+          "Count": 1
+        },
+        {
+          "Start": 609,
+          "End": 609,
+          "Count": 1
+        },
+        {
+          "Start": 898,
+          "End": 898,
           "Count": 1
         }
       ],
       "PriceRanges": [
         {
-          "Start": 2974,
-          "End": 2974,
-          "Count": 1
-        }
-      ],
-      "SeatsCounts": {
-        "4": 1
-      },
-      "VollkaskoCount": {
-        "TrueCount": 0,
-        "FalseCount": 1
-      }
-    },
-    "search_config": {
-      "ID": "6643f292-f49f-463b-836a-197442652db9",
-      "RegionID": 0,
-      "StartRange": "2022-07-23T00:00:00Z",
-      "EndRange": "2022-07-25T00:00:00Z",
-      "NumberDays": 2,
-      "CarType": null,
-      "OnlyVollkasko": null,
-      "MinFreeKilometer": null,
-      "MinNumberSeats": null,
-      "MinPrice": null,
-      "MaxPrice": null,
-      "Pagination": {
-        "Page": 0,
-        "PageSize": 100
-      },
-      "Order": "price-asc",
-      "PriceBucketWidth": 10,
-      "FreeKmBucketWidth": 50
-    }
-  }
-}
-{
-  "requestType": "READ",
-  "timestamp": "1732375983561250000",
-  "log": {
-    "id": "95465495-0ffa-4b8c-b4da-edebbdd9f9fb",
-    "start_time": "2024-11-23T15:33:03.56125Z",
-    "duration": 38.636,
-    "expected_result": {
-      "Offers": [],
-      "CarTypeCounts": {
-        "family": 0,
-        "luxury": 0,
-        "small": 0,
-        "sports": 0
-      },
-      "FreeKilometerRanges": [],
-      "PriceRanges": [],
-      "SeatsCounts": {},
-      "VollkaskoCount": {
-        "TrueCount": 0,
-        "FalseCount": 0
-      }
-    },
-    "actual_result": {
-      "Offers": [
-        {
-          "OfferID": "b209ce27-cd43-4ab2-954a-2842eedd11f4",
-          "IsDataCorrect": true
-        },
-        {
-          "OfferID": "e35fb538-aabb-4f7f-81ff-c3b5af4e50cc",
-          "IsDataCorrect": true
-        }
-      ],
-      "CarTypeCounts": {
-        "family": 1,
-        "luxury": 0,
-        "small": 1,
-        "sports": 0
-      },
-      "FreeKilometerRanges": [
-        {
-          "Start": 108,
-          "End": 108,
+          "Start": 3860,
+          "End": 3860,
           "Count": 1
         },
         {
-          "Start": 278,
-          "End": 278,
-          "Count": 1
-        }
-      ],
-      "PriceRanges": [
-        {
-          "Start": 4331,
-          "End": 4331,
+          "Start": 4281,
+          "End": 4281,
           "Count": 1
         },
         {
-          "Start": 5376,
-          "End": 5376,
+          "Start": 8502,
+          "End": 8502,
+          "Count": 1
+        },
+        {
+          "Start": 12196,
+          "End": 12196,
           "Count": 1
         }
       ],
       "SeatsCounts": {
         "3": 1,
-        "4": 1
+        "4": 1,
+        "5": 1,
+        "6": 1
       },
       "VollkaskoCount": {
-        "TrueCount": 1,
-        "FalseCount": 1
+        "TrueCount": 2,
+        "FalseCount": 2
       }
     },
     "search_config": {
-      "ID": "95465495-0ffa-4b8c-b4da-edebbdd9f9fb",
+      "ID": "714cb616-a12e-4c0b-bc09-8ee8f6f752cf",
       "RegionID": 0,
-      "StartRange": "2022-07-24T00:00:00Z",
-      "EndRange": "2022-07-27T00:00:00Z",
-      "NumberDays": 3,
-      "CarType": null,
-      "OnlyVollkasko": null,
-      "MinFreeKilometer": null,
-      "MinNumberSeats": null,
-      "MinPrice": null,
-      "MaxPrice": null,
-      "Pagination": {
-        "Page": 0,
-        "PageSize": 100
-      },
-      "Order": "price-asc",
-      "PriceBucketWidth": 10,
-      "FreeKmBucketWidth": 50
-    }
-  }
-}
-{
-  "requestType": "READ",
-  "timestamp": "1732375983576250000",
-  "log": {
-    "id": "bf513ac8-9b7b-469e-8ced-8b51c48d2070",
-    "start_time": "2024-11-23T15:33:03.57625Z",
-    "duration": 21.998,
-    "expected_result": {
-      "Offers": [],
-      "CarTypeCounts": {
-        "family": 0,
-        "luxury": 0,
-        "small": 0,
-        "sports": 0
-      },
-      "FreeKilometerRanges": [],
-      "PriceRanges": [],
-      "SeatsCounts": {},
-      "VollkaskoCount": {
-        "TrueCount": 0,
-        "FalseCount": 0
-      }
-    },
-    "actual_result": {
-      "Offers": [
-        {
-          "OfferID": "b209ce27-cd43-4ab2-954a-2842eedd11f4",
-          "IsDataCorrect": true
-        },
-        {
-          "OfferID": "e35fb538-aabb-4f7f-81ff-c3b5af4e50cc",
-          "IsDataCorrect": true
-        }
-      ],
-      "CarTypeCounts": {
-        "family": 1,
-        "luxury": 0,
-        "small": 1,
-        "sports": 0
-      },
-      "FreeKilometerRanges": [
-        {
-          "Start": 108,
-          "End": 108,
-          "Count": 1
-        },
-        {
-          "Start": 278,
-          "End": 278,
-          "Count": 1
-        }
-      ],
-      "PriceRanges": [
-        {
-          "Start": 4331,
-          "End": 4331,
-          "Count": 1
-        },
-        {
-          "Start": 5376,
-          "End": 5376,
-          "Count": 1
-        }
-      ],
-      "SeatsCounts": {
-        "3": 1,
-        "4": 1
-      },
-      "VollkaskoCount": {
-        "TrueCount": 1,
-        "FalseCount": 1
-      }
-    },
-    "search_config": {
-      "ID": "bf513ac8-9b7b-469e-8ced-8b51c48d2070",
-      "RegionID": 0,
-      "StartRange": "2022-07-24T00:00:00Z",
-      "EndRange": "2022-07-27T00:00:00Z",
-      "NumberDays": 3,
-      "CarType": null,
-      "OnlyVollkasko": null,
-      "MinFreeKilometer": null,
-      "MinNumberSeats": null,
-      "MinPrice": null,
-      "MaxPrice": null,
-      "Pagination": {
-        "Page": 0,
-        "PageSize": 100
-      },
-      "Order": "price-asc",
-      "PriceBucketWidth": 10,
-      "FreeKmBucketWidth": 50
-    }
-  }
-}
-{
-  "requestType": "READ",
-  "timestamp": "1732375983586250000",
-  "log": {
-    "id": "ae69578c-92b7-4d6a-a3e2-56ec4531ea86",
-    "start_time": "2024-11-23T15:33:03.58625Z",
-    "duration": 18.268,
-    "expected_result": {
-      "Offers": [],
-      "CarTypeCounts": {
-        "family": 0,
-        "luxury": 0,
-        "small": 0,
-        "sports": 0
-      },
-      "FreeKilometerRanges": [],
-      "PriceRanges": [],
-      "SeatsCounts": {},
-      "VollkaskoCount": {
-        "TrueCount": 0,
-        "FalseCount": 0
-      }
-    },
-    "actual_result": {
-      "Offers": [
-        {
-          "OfferID": "b209ce27-cd43-4ab2-954a-2842eedd11f4",
-          "IsDataCorrect": true
-        },
-        {
-          "OfferID": "e35fb538-aabb-4f7f-81ff-c3b5af4e50cc",
-          "IsDataCorrect": true
-        }
-      ],
-      "CarTypeCounts": {
-        "family": 1,
-        "luxury": 0,
-        "small": 1,
-        "sports": 0
-      },
-      "FreeKilometerRanges": [
-        {
-          "Start": 108,
-          "End": 108,
-          "Count": 1
-        },
-        {
-          "Start": 278,
-          "End": 278,
-          "Count": 1
-        }
-      ],
-      "PriceRanges": [
-        {
-          "Start": 4331,
-          "End": 4331,
-          "Count": 1
-        },
-        {
-          "Start": 5376,
-          "End": 5376,
-          "Count": 1
-        }
-      ],
-      "SeatsCounts": {
-        "3": 1,
-        "4": 1
-      },
-      "VollkaskoCount": {
-        "TrueCount": 1,
-        "FalseCount": 1
-      }
-    },
-    "search_config": {
-      "ID": "ae69578c-92b7-4d6a-a3e2-56ec4531ea86",
-      "RegionID": 0,
-      "StartRange": "2022-07-24T00:00:00Z",
-      "EndRange": "2022-07-27T00:00:00Z",
+      "StartRange": "2024-09-09T00:00:00Z",
+      "EndRange": "2024-09-12T00:00:00Z",
       "NumberDays": 3,
       "CarType": null,
       "OnlyVollkasko": null,
