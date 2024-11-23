@@ -320,8 +320,20 @@ impl DBManager {
         }).collect::<Vec<Offer>>();
 
         match request_offer.sort_order {
-            SortOrder::PriceAsc => possible_filtered_offers.sort_by(|a, b| a.number_seats.cmp(&b.number_seats)),
-            SortOrder::PriceDesc => possible_filtered_offers.sort_by(|a, b| b.number_seats.cmp(&a.number_seats)),
+            SortOrder::PriceAsc => possible_filtered_offers.sort_by(|a, b| {
+                let comp = a.price.cmp(&b.price);
+                if comp.is_eq() {
+                    return a.id.cmp(&b.id);
+                }
+                return comp;
+            }),
+            SortOrder::PriceDesc => possible_filtered_offers.sort_by(|a, b| {
+                let comp = b.price.cmp(&a.price);
+                if comp.is_eq() {
+                    return a.id.cmp(&b.id);
+                }
+                return comp;
+            }),
         }
 
         return possible_filtered_offers
@@ -410,13 +422,7 @@ impl DBManager {
     pub fn toPriceRangesOffers(offers: &Vec<Offer>, price_range_width: u32) -> Vec<PriceRange> {
         let mut vec_offers_price_range = offers.clone();
 
-        vec_offers_price_range.sort_by(|a, b| {
-            let comp = a.price.cmp(&b.price);
-            if comp.is_eq() {
-                return a.id.cmp(&b.id);
-            }
-            return comp;
-        });
+        vec_offers_price_range.sort_by(|a, b| a.price.cmp(&b.price));
         let (head_price_range, tail_price_range) = vec_offers_price_range.split_at(1);
 
         // magic number access,
