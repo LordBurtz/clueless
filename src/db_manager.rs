@@ -3,6 +3,7 @@ use crate::json_models::*;
 use crate::json_models::{CarTypeCount, GetReponseBodyModel};
 use crate::GenericError;
 use clickhouse::sql::Bind;
+use serde::Serialize;
 
 #[derive(Clone)]
 pub struct DBManager {
@@ -80,7 +81,7 @@ impl DBManager {
         &self,
         request_offer: RequestOffer,
     ) -> Result<GetReponseBodyModel, GenericError> {
-        let mut query_parameters: Vec<Box<dyn Bind>> = Vec::new();
+        let mut query_parameters: Vec<String> = Vec::new();
         let mut query_string: String = " SELECT ?fields
         FROM offers
         WHERE
@@ -90,32 +91,33 @@ impl DBManager {
 
         if let Some(numberOfSeats) = request_offer.min_number_seats {
             query_string.push_str("AND ? <= numberSeats");
-            query_parameters.push(Box::new(numberOfSeats).into());
+            query_parameters.push(numberOfSeats.to_string());
         }
         if let Some(carType) = request_offer.car_type {
             query_string.push_str(" AND carType = ?");
-            query_parameters.push(Box::new(carType).into());
+            query_parameters.push(carType.as_u8().to_string());
         }
         if let Some(hasVollkasko) = request_offer.only_vollkasko {
             query_string.push_str(" AND hasVollkasko = ?");
-            query_parameters.push(Box::new(hasVollkasko).into());
+            query_parameters.push(hasVollkasko.to_string());
         }
         if let Some(freeKilometers) = request_offer.min_free_kilometer {
             query_string.push_str(" AND freeKilometers >= ?");
-            query_parameters.push(Box::new(freeKilometers).into());
+            query_parameters.push(freeKilometers.to_string());
         }
         if let Some(minPrice) = request_offer.min_price {
-            query_parameters.push(Box::new(minPrice).into());
+            query_parameters.push(minPrice.to_string());
             if let Some(maxPrice) = request_offer.max_price {
                 query_string.push_str(" AND price BETWEEN ? AND ?");
-                query_parameters.push(Box::new(maxPrice).into());
+                query_parameters.push(maxPrice.to_string());
             } else {
                 query_string.push_str(" AND price >= ?");
             }
         }
         let mut query = self
             .client
-            .query(query_parameters.as_slice());
+            .query(&*query_string)
+            ;
 
         for param in query_parameters {
             query = query.bind(&param);
