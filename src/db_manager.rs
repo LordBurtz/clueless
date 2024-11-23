@@ -147,7 +147,8 @@ impl DBManager {
         WHERE
             rh.ancestor_id = ? AND
             ? <= start_date AND
-            ? >= end_date"
+            ? >= end_date AND
+            end_date - start_date >= ?"
             .to_string();
 
         /// For now commented out as we filter in rust, not sql
@@ -179,6 +180,9 @@ impl DBManager {
         ).bind(
             request_offer
                 .time_range_end
+        ).bind(
+            request_offer
+                .number_days * 24 * 60 * 60 * 1000
         );
 
         /// For now commented out, as we filter not in sql but in rust
