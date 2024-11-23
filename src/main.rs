@@ -4,17 +4,14 @@ mod db_manager;
 
 use json_models::*;
 
-use hyper_util::rt::TokioIo;
-use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
+use crate::db_manager::DBManager;
 use bytes::{Buf, Bytes};
 use http_body_util::{BodyExt, Full};
 use hyper::server::conn::http1;
-use hyper::service::service_fn;
 use hyper::{body::Incoming as IncomingBody, header, Method, Request, Response, StatusCode};
-use rusqlite::Connection;
+use hyper_util::rt::TokioIo;
+use std::net::SocketAddr;
 use tokio::net::TcpListener;
-use crate::db_manager::DBManager;
 
 type GenericError = Box<dyn std::error::Error + Send + Sync>;
 type Result<T> = std::result::Result<T, GenericError>;
@@ -25,7 +22,7 @@ static OFFER_CREATED: &[u8] = b"Offers were created";
 static NOTFOUND: &[u8] = b"Not Found";
 static OFFERS_CLEANED_UP: &[u8] = b"Offers were cleaned up";
 
-async fn api_post_response(req: Request<IncomingBody>, ref_db: Arc<Mutex<DBManager>>) -> Result<Response<BoxBody>> {
+async fn api_post_response(req: Request<IncomingBody>, manager: DBManager) -> Result<Response<BoxBody>> {
     // Aggregate the body...
     let whole_body = req.collect().await?.aggregate();
 
@@ -33,9 +30,8 @@ async fn api_post_response(req: Request<IncomingBody>, ref_db: Arc<Mutex<DBManag
     let request_body: PostRequestBodyModel = serde_json::from_reader(whole_body.reader())?;
 
     // try
-    let mut manager = ref_db.lock().unwrap();
 
-    let (response, status_code) = match manager.insert_offers(request_body) {
+    let (response, status_code) = match manager.insert_offers(request_body).await {
         Ok(_) => {
             (OFFER_CREATED, StatusCode::OK)
         },
@@ -52,14 +48,16 @@ async fn api_post_response(req: Request<IncomingBody>, ref_db: Arc<Mutex<DBManag
     Ok(response)
 }
 
-async fn handle_get_offers_request(req: Request<IncomingBody>, ref_db: Arc<Mutex<DBManager>>) -> Result<Response<BoxBody>> {
+async fn handle_get_offers_request(req: Request<IncomingBody>, manager: DBManager) -> Result<Response<BoxBody>> {
     println!("GET request");
+    // Aggregate the body...
+    println!("test");
 
     let query: RequestOffer = serde_urlencoded::from_str(req.uri().query().unwrap())?;
 
-    let manager = ref_db.lock().unwrap();
+    println!("{:?}", query);
 
-    let (response, status_code) = match manager.query_for(query) {
+    let (response, status_code) = match manager.query_for(query).await {
         Ok(res) => {
             // normally use res but now mock
             let json = serde_json::to_string(&res)?;
@@ -79,16 +77,13 @@ async fn handle_get_offers_request(req: Request<IncomingBody>, ref_db: Arc<Mutex
     Ok(response)
 }
 
-async fn delete_offer_request(ref_db: Arc<Mutex<DBManager>>) -> Result<Response<BoxBody>> {
-    let mut manager = ref_db.lock().unwrap();
+async fn delete_offer_request(manager: DBManager) -> Result<Response<BoxBody>> {
 
-    let (response, status_code) = match manager.cleanup() {
+    let (response, status_code) = match manager.cleanup().await {
         Ok(_) => {
-            println!("Cleaning up successful");
             (OFFERS_CLEANED_UP, StatusCode::OK)
         },
-        Err(err) => {
-            println!("{:?}", err);
+        Err(_) => {
             (INTERNAL_SERVER_ERROR, StatusCode::INTERNAL_SERVER_ERROR)
         }
     };
@@ -100,13 +95,13 @@ async fn delete_offer_request(ref_db: Arc<Mutex<DBManager>>) -> Result<Response<
     Ok(response)
 }
 
-async fn api_handler(req: Request<IncomingBody>, ref_db: Arc<Mutex<DBManager>>) -> Result<Response<BoxBody>> {
+async fn api_handler(req: Request<IncomingBody>, manager: DBManager) -> Result<Response<BoxBody>> {
     println!("{} {}", req.method(), req.uri().path());
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/") => Ok(Response::new(full("clueless"))),
-        (&Method::POST, "/api/offers") => api_post_response(req, ref_db).await,
-        (&Method::GET, "/api/offers") => handle_get_offers_request(req, ref_db).await,
-        (&Method::DELETE, "/api/offers") => delete_offer_request(ref_db).await,
+        (&Method::POST, "/api/offers") => api_post_response(req, manager).await,
+        (&Method::GET, "/api/offers") => handle_get_offers_request(req, manager).await,
+        (&Method::DELETE, "/api/offers") => delete_offer_request(manager).await,
         _ => {
             // Return 404 not found response.
             Ok(Response::builder()
@@ -126,20 +121,25 @@ fn full<T: Into<Bytes>>(chunk: T) -> BoxBody {
 #[tokio::main]
 async fn main() -> Result<()> {
     // pretty_env_logger::init();
-    let conn = db_manager::open_connection()?;
-    let db = Arc::new(DBManager::new_lock(conn));
+    let db_client = clickhouse::Client::default()
+        .with_url("http://localhost:8123")
+        .with_user("clickhouse")
+        .with_password("password")
+        .with_database("check24");
 
-    let addr: SocketAddr = "0.0.0.0:80".parse().unwrap();
+    let db_manager = DBManager::new(db_client);
+
+    let addr: SocketAddr = "127.0.0.1:3000".parse().unwrap();
 
     let listener = TcpListener::bind(&addr).await?;
     println!("Listening on http://{}", addr);
     loop {
         let (stream, _) = listener.accept().await?;
         let io = TokioIo::new(stream);
-        let db_clone = db.clone();
+        let db_manager = db_manager.clone();
 
         tokio::task::spawn(async move {
-            let service = service_fn(|req| api_handler(req,  db_clone.clone()));
+            let service = (|req| api_handler(req, db_manager));
 
             if let Err(err) = http1::Builder::new().serve_connection(io, service).await {
                 println!("Failed to serve connection: {:?}", err);

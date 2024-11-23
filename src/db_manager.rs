@@ -1,11 +1,11 @@
 use crate::json_models::*;
 use crate::json_models::{CarTypeCount, GetReponseBodyModel};
 use crate::GenericError;
-use rusqlite::*;
-use std::sync::Mutex;
+use clickhouse::sql::Bind;
 
+#[derive(Clone)]
 pub struct DBManager {
-    conn: Connection,
+    client: clickhouse::Client,
 }
 
 const TABLE_INIT: &str = r#"
@@ -29,9 +29,61 @@ const INSERT_QUERY: &str = r#"
     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
 "#;
 
-const SEARCH_QUERY: &str = "
+const SEARCH_QUERY: &str = r#"
     SELECT *
     FROM check24_db
+    WHERE
+        mostSpecificRegionID = ?1 AND
+        ?2 <= startDate AND
+        ?3 >= endDate AND
+        ?4 <= numberSeats AND
+        carType = ?5 AND
+        hasVollkasko = ?6 AND
+        freeKilometers >= ?7 AND
+        price BETWEEN ?9 AND ?0;
+"#;
+
+const DELETE_QUERY: &str = r#""DELETE FROM offers"#;
+
+impl DBManager {
+    pub fn new(client: clickhouse::Client) -> Self {
+        Self { client }
+    }
+
+    pub async fn insert_offers(&self, offers: PostRequestBodyModel) -> Result<(), GenericError> {
+        let mut insert = self.client.insert("offers")?;
+
+        for offer in offers.offers {
+            insert
+                .write(&Offer {
+                    id: offer.id,
+                    data: offer.data,
+                    most_specific_region_ID: offer.most_specific_region_ID,
+                    start_date: offer.start_date,
+                    end_date: offer.end_date,
+                    number_seats: offer.number_seats,
+                    price: offer.price,
+                    car_type: offer.car_type,
+                    has_vollkasko: offer.has_vollkasko,
+                    free_kilometers: offer.free_kilometers,
+                })
+                .await?;
+        }
+
+        insert.end().await?;
+
+        Ok(())
+    }
+
+    pub async fn query_for(
+        &self,
+        request_offer: RequestOffer,
+    ) -> Result<GetReponseBodyModel, GenericError> {
+        let mut offers = self
+            .client
+            .query(
+                " SELECT ?fields
+    FROM offers
     WHERE
         mostSpecificRegionID = ? AND
         ? <= startDate AND
@@ -41,82 +93,19 @@ const SEARCH_QUERY: &str = "
         hasVollkasko = ? AND
         freeKilometers >= ? AND
         price BETWEEN ? AND ?
-        ";
-
-const DELETE_QUERY: &str = r#"DELETE FROM check24_db"#;
-
-pub fn open_connection() -> Result<Connection, Error> {
-    let conn = Connection::open("test-db.sqlite3")?;
-    conn.execute(TABLE_INIT, [])?;
-    Ok(conn)
-}
-
-impl DBManager {
-    pub fn new_lock(conn: Connection) -> Mutex<Self> {
-        Mutex::new(DBManager { conn })
-    }
-
-    pub fn insert_offers(&self, offers: PostRequestBodyModel) -> Result<(), GenericError> {
-        let conn = &self.conn;
-        let mut stmt = conn.prepare(INSERT_QUERY)?;
-
-        for offer in offers.offers {
-            stmt.execute(params![
-                offer.id,
-                offer.data,
-                offer.most_specific_region_ID,
-                offer.start_date,
-                offer.end_date,
-                offer.number_seats,
-                offer.price,
-                offer.car_type.as_u8(),
-                offer.has_vollkasko,
-                offer.free_kilometers
-            ])?;
-        }
-
-        Ok(())
-    }
-
-    pub fn query_mock(&self, request_offer: RequestOffer) -> Result<(), Error> {
-        Ok(())
-    }
-
-    pub fn query_for(&self, request_offer: RequestOffer) -> Result<GetReponseBodyModel, Error> {
-        let conn = &self.conn;
-        let mut stmt = conn.prepare(
-            SEARCH_QUERY,
-        )?;
-        let offers: Result<Vec<Offer>> = stmt.query_map(
-            params![
-                request_offer.region_id,
-                request_offer.time_range_start,
-                request_offer.time_range_end,
-                request_offer.min_number_seats.unwrap(),
-                request_offer.car_type.unwrap().as_u8(),
-                request_offer.only_vollkasko.unwrap() as i32,
-                request_offer.min_free_kilometer.unwrap(),
-                request_offer.min_price.unwrap(),
-                request_offer.max_price.unwrap()
-            ],
-            |row| {
-                println!("row: {:?}", row);
-                Ok(Offer {
-                    id: row.get(0)?,
-                    data: row.get(1)?,
-                    most_specific_region_ID: row.get(2)?,
-                    start_date: row.get(3)?,
-                    end_date: row.get(4)?,
-                    number_seats: row.get(5)?,
-                    price: row.get(6)?,
-                    car_type: CarType::to_enum(row.get(7)?),
-                    has_vollkasko: row.get(8)?,
-                    free_kilometers: row.get(9)?,
-                })
-            },
-        )?.into_iter().collect();
-        
-        let mut offers = offers?;
+        ",
+            )
+            .bind(request_offer.region_id)
+            .bind(request_offer.time_range_start)
+            .bind(request_offer.time_range_end)
+            .bind(request_offer.min_number_seats.unwrap())
+            .bind(request_offer.car_type.unwrap().as_u8())
+            .bind(request_offer.only_vollkasko.unwrap() as i32)
+            .bind(request_offer.min_free_kilometer.unwrap())
+            .bind(request_offer.min_price.unwrap())
+            .bind(request_offer.max_price.unwrap())
+            .fetch_all::<Offer>()
+            .await?;
 
         // counts for vollkasko occurences
         let (mut true_count, mut false_count) = (0, 0);
@@ -125,7 +114,6 @@ impl DBManager {
         let (mut small, mut sports, mut luxury, mut family) = (0, 0, 0, 0);
 
         for offer in &offers {
-
             if offer.has_vollkasko {
                 true_count += 1
             } else {
@@ -143,7 +131,7 @@ impl DBManager {
         //
         // price range slicing
         //
-        
+
         // TODO: only once
         let mut vec_offers_price_range = offers.clone();
 
@@ -211,7 +199,6 @@ impl DBManager {
         // TODO: only once
         // setup a list of offers
 
-
         vec_number_seats.sort_by(|a, b| a.number_seats.cmp(&b.number_seats));
 
         let seatCountVec = vec_number_seats
@@ -232,7 +219,6 @@ impl DBManager {
 
         // TODO: only once
         // setup a list of offers
-
 
         vec_offers_free_kilometers.sort_by(|a, b| a.free_kilometers.cmp(&b.free_kilometers));
         let (head_free_km, tail_free_km) = vec_offers_free_kilometers.split_at(1);
@@ -283,7 +269,8 @@ impl DBManager {
         });
     }
 
-    pub fn cleanup(&self) -> Result<usize> {
-        self.conn.execute(DELETE_QUERY, [])
+    pub async fn cleanup(&self) -> Result<(), GenericError> {
+        self.client.query("TRUNCATE TABLE offers").execute().await?;
+        Ok(())
     }
 }

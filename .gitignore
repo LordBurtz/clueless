@@ -1,3 +1,5 @@
 /target
 .idea
+clickhouse/data
+clickhouse/logs
 .DS_Store

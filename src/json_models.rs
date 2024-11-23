@@ -1,5 +1,4 @@
-use rusqlite::ToSql;
-use rusqlite::types::{FromSql, ToSqlOutput, ValueRef};
+use clickhouse::Row;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -114,7 +113,7 @@ pub struct PostRequestBodyModel {
     pub offers: Vec<Offer>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Row)]
 #[serde(rename_all = "camelCase")]
 pub struct Offer {
     #[serde(rename = "ID")]
