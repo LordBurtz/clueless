@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RequestOffer {
-    region_id: i8,
-    time_range_start: i32,
-    time_range_end: i32,
+    region_id: u8,
+    time_range_start: i64,
+    time_range_end: i64,
     number_days: i32,
     sort_order: SortOrder,
     page: i32,
@@ -38,9 +38,9 @@ enum SortOrder {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct ResponseOffers {
+pub struct ResponseOffers {
     offers: Vec<ResponseOffer>,
-    price_range: Vec<PriceRange>,
+    price_ranges: Vec<PriceRange>,
     car_type_counts: CarTypeCount,
     seats_count: Vec<SeatCount>,
     free_kilometer_range: Vec<FreeKilometerRange>,
@@ -48,9 +48,8 @@ struct ResponseOffers {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 struct ResponseOffer {
-    id: String,
+    ID: String,
     data: String // encoded as base64
 }
 
@@ -70,6 +69,7 @@ struct CarTypeCount {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 struct SeatCount {
     count: i32,
     number_seats: i32,
@@ -91,19 +91,20 @@ struct VollKaskoCount {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct PostRequest {
-    offset: Vec<Offer>,
+pub struct PostRequest {
+    offers: Vec<Offer>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct Offer {
+    #[serde(rename = "ID")]
     id: String,
     // TODO: optimize?
     data: String, // base64 encoded 256 Byte array
     most_specific_region_ID: i32,
-    start_date: i32,
-    end_date: i32,
+    start_date: i64,
+    end_date: i64,
     number_seats: i32,
     price: i32,
     car_type: CarType,
@@ -112,3 +113,62 @@ struct Offer {
 }
 
 
+pub const SAMPLE_GET_RESPONSE: &str = r#"
+{
+  "offers": [
+    {
+      "ID": "01934a57-7988-7879-bb9b-e03bd4e77b9d",
+      "data": "string"
+    }
+  ],
+  "priceRanges": [
+    {
+      "start": 10000,
+      "end": 15000,
+      "count": 4
+    }
+  ],
+  "carTypeCounts": {
+    "small": 1,
+    "sports": 2,
+    "luxury": 1,
+    "family": 0
+  },
+  "seatsCount": [
+    {
+      "numberSeats": 5,
+      "count": 4
+    }
+  ],
+  "freeKilometerRange": [
+    {
+      "start": 100,
+      "end": 150,
+      "count": 4
+    }
+  ],
+  "vollkaskoCount": {
+    "trueCount": 3,
+    "falseCount": 1
+  }
+}
+"#;
+
+pub const SAMPLE_POST_REQUEST: &str = r#"
+{
+  "offers": [
+    {
+      "ID": "01934a57-7988-7879-bb9b-e03bd4e77b9d",
+      "data": "string",
+      "mostSpecificRegionID": 5,
+      "startDate": 1732104000000,
+      "endDate": 1732449600000,
+      "numberSeats": 5,
+      "price": 10000,
+      "carType": "luxury",
+      "hasVollkasko": true,
+      "freeKilometers": 120
+    }
+  ]
+}
+"#;

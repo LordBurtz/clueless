@@ -1,6 +1,8 @@
 // #![deny(warnings)]
 mod json_models;
 
+use json_models::*;
+
 use hyper_util::rt::TokioIo;
 use std::net::SocketAddr;
 
@@ -22,10 +24,13 @@ async fn api_post_response(req: Request<IncomingBody>) -> Result<Response<BoxBod
     let whole_body = req.collect().await?.aggregate();
     // Decode as JSON...
     let mut data: serde_json::Value = serde_json::from_reader(whole_body.reader())?;
+
+    let test: PostRequest = serde_json::from_value(data)?;
+
     // Change the JSON...
-    data["test"] = serde_json::Value::from("test_value");
+    // data["test"] = serde_json::Value::from("test_value");
     // And respond with the new JSON.
-    let json = serde_json::to_string(&data)?;
+    let json = serde_json::to_string(&test)?;
     let response = Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, "application/json")
@@ -34,8 +39,11 @@ async fn api_post_response(req: Request<IncomingBody>) -> Result<Response<BoxBod
 }
 
 async fn handle_get_offers_request(req: Request<IncomingBody>) -> Result<Response<BoxBody>> {
-    let query_params: json_models::RequestOffer =
-        serde_urlencoded::from_str(req.uri().query().unwrap_or(""))?;
+    // let query_params: json_models::RequestOffer =
+    //    serde_urlencoded::from_str(req.uri().query().unwrap_or(""))?;
+    let query_params: ResponseOffers = serde_json::from_str(SAMPLE_GET_RESPONSE)?;
+        // serde_urlencoded::from_str(SAMPLE_GET_RESPONSE)?;
+
     let res = match serde_json::to_string(&query_params) {
         Ok(json) => Response::builder()
             .header(header::CONTENT_TYPE, "application/json")
@@ -51,7 +59,7 @@ async fn handle_get_offers_request(req: Request<IncomingBody>) -> Result<Respons
 
 async fn api_handler(req: Request<IncomingBody>) -> Result<Response<BoxBody>> {
     match (req.method(), req.uri().path()) {
-        (&Method::GET, "/") => Ok(Response::new(full("Hello World!"))),
+        (&Method::GET, "/") => Ok(Response::new(full("clueless"))),
         (&Method::POST, "/api/offers") => api_post_response(req).await,
         (&Method::GET, "/api/offers") => handle_get_offers_request(req).await,
         (&Method::DELETE, "/api/offers") => handle_get_offers_request(req).await,
