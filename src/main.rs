@@ -3,7 +3,7 @@ mod db_manager;
 mod db_models;
 mod json_models;
 mod region_hierarchy;
-mod tree_exp;
+//mod tree_exp;
 
 use json_models::*;
 
