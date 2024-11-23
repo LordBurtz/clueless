@@ -6,13 +6,14 @@ use json_models::*;
 
 use hyper_util::rt::TokioIo;
 use std::net::SocketAddr;
-
+use std::sync::Mutex;
 use bytes::{Buf, Bytes};
 use http_body_util::{BodyExt, Full};
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
 use hyper::{body::Incoming as IncomingBody, header, Method, Request, Response, StatusCode};
 use tokio::net::TcpListener;
+use crate::db_manager::DBManager;
 
 type GenericError = Box<dyn std::error::Error + Send + Sync>;
 type Result<T> = std::result::Result<T, GenericError>;
@@ -21,6 +22,8 @@ type BoxBody = http_body_util::combinators::BoxBody<Bytes, hyper::Error>;
 static INTERNAL_SERVER_ERROR: &[u8] = b"Internal Server Error";
 static NOTFOUND: &[u8] = b"Not Found";
 
+static DB: Mutex<DBManager> = DBManager::new_lock();
+
 
 async fn api_post_response(req: Request<IncomingBody>) -> Result<Response<BoxBody>> {
     // Aggregate the body...
@@ -28,12 +31,13 @@ async fn api_post_response(req: Request<IncomingBody>) -> Result<Response<BoxBod
     // Decode as JSON...
     // let mut data: serde_json::Value = serde_json::from_reader(whole_body.reader())?;
 
-    let test: PostRequestBodyModel = serde_json::from_reader(whole_body.reader())?;
+    let request_body: PostRequestBodyModel = serde_json::from_reader(whole_body.reader())?;
+
 
     // Change the JSON...
     // data["test"] = serde_json::Value::from("test_value");
     // And respond with the new JSON.
-    let json = serde_json::to_string(&test)?;
+    let json = serde_json::to_string(&request_body)?;
     let response = Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, "application/json")
