@@ -287,7 +287,7 @@ impl DBManager {
         //
 
         let price_range_bucket = Self::toPriceRangesOffers(
-            offers.iter().chain(price_range_filter_excl),
+            filtered_offers.iter().copied().chain(price_range_filter_excl),
             request_offer.price_range_width,
         );
 
@@ -296,10 +296,10 @@ impl DBManager {
         //
 
         let vollkasko_count2 =
-            Self::toVollkaskoOffers(offers.iter().chain(has_vollkasko_filter_excl));
+            Self::toVollkaskoOffers(filtered_offers.iter().copied().chain(has_vollkasko_filter_excl));
         // let defsi = car_type_count;
         let sid = vollkasko_count;
-        let car_type_count2 = Self::to_car_type_count(offers.iter().chain(car_type_filter_excl));
+        let car_type_count2 = Self::to_car_type_count(filtered_offers.iter().copied().chain(car_type_filter_excl));
 
 
         let listForIt = (filtered_offers.iter().copied().chain(free_kilometers_filter_excl));
