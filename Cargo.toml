@@ -21,6 +21,7 @@ once_cell = "1.20.2"
 rustflags = ["-C", "target-cpu=native"]
 
 [profile.release]
+debug = 2
 codegen-units = 1
 lto = "fat"
 opt-level = 3
