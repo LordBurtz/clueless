@@ -54,12 +54,9 @@ async fn api_post_response(req: Request<IncomingBody>, ref_db: Arc<Mutex<DBManag
 
 async fn handle_get_offers_request(req: Request<IncomingBody>, ref_db: Arc<Mutex<DBManager>>) -> Result<Response<BoxBody>> {
     println!("GET request");
-    // Aggregate the body...
-    println!("test");
 
     let query: RequestOffer = serde_urlencoded::from_str(req.uri().query().unwrap())?;
-        
-    println!("{:?}", query);
+
     let manager = ref_db.lock().unwrap();
 
     let (response, status_code) = match manager.query_for(query) {
@@ -90,7 +87,8 @@ async fn delete_offer_request(ref_db: Arc<Mutex<DBManager>>) -> Result<Response<
             println!("Cleaning up successful");
             (OFFERS_CLEANED_UP, StatusCode::OK)
         },
-        Err(_) => {
+        Err(err) => {
+            println!("{:?}", err);
             (INTERNAL_SERVER_ERROR, StatusCode::INTERNAL_SERVER_ERROR)
         }
     };

@@ -29,19 +29,19 @@ const INSERT_QUERY: &str = r#"
     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
 "#;
 
-const SEARCH_QUERY: &str = r#"
+const SEARCH_QUERY: &str = "
     SELECT *
     FROM check24_db
     WHERE
-        mostSpecificRegionID = ?1 AND
-        ?2 <= startDate AND
-        ?3 >= endDate AND
-        ?4 <= numberSeats AND
-        carType = ?5 AND
-        hasVollkasko = ?6 AND
-        freeKilometers >= ?7 AND
-        price BETWEEN ?9 AND ?0;
-"#;
+        mostSpecificRegionID = ? AND
+        ? <= startDate AND
+        ? >= endDate AND
+        ? <= numberSeats AND
+        carType = ? AND
+        hasVollkasko = ? AND
+        freeKilometers >= ? AND
+        price BETWEEN ? AND ?
+        ";
 
 const DELETE_QUERY: &str = r#"DELETE FROM check24_db"#;
 
@@ -85,18 +85,7 @@ impl DBManager {
     pub fn query_for(&self, request_offer: RequestOffer) -> Result<GetReponseBodyModel, Error> {
         let conn = &self.conn;
         let mut stmt = conn.prepare(
-            " SELECT *
-    FROM check24_db
-    WHERE
-        mostSpecificRegionID = ? AND
-        ? <= startDate AND
-        ? >= endDate AND
-        ? <= numberSeats AND
-        carType = ? AND
-        hasVollkasko = ? AND
-        freeKilometers >= ? AND
-        price BETWEEN ? AND ?
-        ",
+            SEARCH_QUERY,
         )?;
         let offers: Result<Vec<Offer>> = stmt.query_map(
             params![
