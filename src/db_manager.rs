@@ -1,4 +1,3 @@
-use std::cmp::PartialEq;
 use crate::db_models::{CarType, Offer, RegionHierarchy};
 use crate::json_models::*;
 use crate::json_models::{
@@ -38,7 +37,7 @@ const DELETE_QUERY: &str = r#""DELETE FROM offers"#;
 impl CarType {
     fn eqMe(&self, other: &crate::json_models::CarType) -> bool {
         match (self, other) {
-            (CarType::Small,  crate::json_models::CarType::Small) => true,
+            (CarType::Small, crate::json_models::CarType::Small) => true,
             (CarType::Sports, crate::json_models::CarType::Sports) => true,
             (CarType::Luxury, crate::json_models::CarType::Luxury) => true,
             (CarType::Family, crate::json_models::CarType::Family) => true,
@@ -142,17 +141,16 @@ impl DBManager {
         &self,
         request_offer: RequestOffer,
     ) -> Result<GetReponseBodyModel, GenericError> {
-        let mut query_parameters: Vec<String> = Vec::new();
-        let mut query_string: String = "SELECT ?fields
+        let query_string: String = "SELECT ?fields
         FROM offers
+        JOIN region_hierarchy rh ON offers.most_specific_region_id = rh.descendant_id
         WHERE
-        most_specific_region_id = ? AND
+            rh.ancestor_id = ? AND
             ? <= start_date AND
             ? >= end_date"
             .to_string();
 
         /// For now commented out as we filter in rust, not sql
-
         // if request_offer.min_number_seats.is_some() {
         //     query_string.push_str("AND ? <= number_seats");
         // }
@@ -175,7 +173,6 @@ impl DBManager {
         let mut query = self.client.query(&query_string);
 
         /// For now commented out, as we filter not in sql but in rust
-
         // if let Some(numberOfSeats) = request_offer.min_number_seats {
         //     query = query.bind(numberOfSeats);
         // }
@@ -194,7 +191,6 @@ impl DBManager {
         //         query = query.bind(maxPrice);
         //     }
         // }
-
         let offers = query.fetch_all::<Offer>().await?;
 
         // counts for vollkasko occurences
@@ -263,43 +259,50 @@ impl DBManager {
 
         let temp_offers = offers.clone();
 
-        let mut possible_filtered_offers: Vec<&Offer> =  temp_offers.iter().filter(|a| {
-            if let Some(numberOfSeats) = request_offer.min_number_seats {
-                if a.number_seats < numberOfSeats {
-                    return false;
-                }
-            }
-            if let Some(carType) = request_offer.car_type {
-                if a.car_type.eqMe(&carType) {
-                    return false;
-                }
-            }
-            if let Some(hasVollkasko) = request_offer.only_vollkasko {
-                if a.has_vollkasko != hasVollkasko {
-                    return false;
-                }
-            }
-            if let Some(freeKilometers) = request_offer.min_free_kilometer {
-                if a.free_kilometers < freeKilometers {
-                    return false;
-                }
-            }
-            if let Some(minPrice) = request_offer.min_price {
-                if let Some(maxPrice) = request_offer.max_price {
-                    if (maxPrice <= a.price) {
+        let mut possible_filtered_offers: Vec<&Offer> = temp_offers
+            .iter()
+            .filter(|a| {
+                if let Some(numberOfSeats) = request_offer.min_number_seats {
+                    if a.number_seats < numberOfSeats {
                         return false;
                     }
                 }
-                if minPrice > a.price {
-                    return false;
+                if let Some(carType) = request_offer.car_type {
+                    if a.car_type.eqMe(&carType) {
+                        return false;
+                    }
                 }
-            }
-            return true;
-        }).collect::<Vec<&Offer>>();
+                if let Some(hasVollkasko) = request_offer.only_vollkasko {
+                    if a.has_vollkasko != hasVollkasko {
+                        return false;
+                    }
+                }
+                if let Some(freeKilometers) = request_offer.min_free_kilometer {
+                    if a.free_kilometers < freeKilometers {
+                        return false;
+                    }
+                }
+                if let Some(minPrice) = request_offer.min_price {
+                    if let Some(maxPrice) = request_offer.max_price {
+                        if (maxPrice <= a.price) {
+                            return false;
+                        }
+                    }
+                    if minPrice > a.price {
+                        return false;
+                    }
+                }
+                return true;
+            })
+            .collect::<Vec<&Offer>>();
 
         match request_offer.sort_order {
-            SortOrder::PriceAsc => possible_filtered_offers.sort_by(|a, b| a.number_seats.cmp(&b.number_seats)),
-            SortOrder::PriceDesc => possible_filtered_offers.sort_by(|a, b| b.number_seats.cmp(&a.number_seats)),
+            SortOrder::PriceAsc => {
+                possible_filtered_offers.sort_by(|a, b| a.number_seats.cmp(&b.number_seats))
+            }
+            SortOrder::PriceDesc => {
+                possible_filtered_offers.sort_by(|a, b| b.number_seats.cmp(&a.number_seats))
+            }
         }
 
         let paged_offers: Vec<ResponseOffer> = offers

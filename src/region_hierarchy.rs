@@ -13,7 +13,7 @@ struct Region {
 }
 pub async fn populate_region_hierarchy(manager: &DBManager) -> Result<(), GenericError> {
     manager.delete_region_hierarchy().await?;
-    let mut path = vec![&*ROOT_REGION];
+    let path = vec![&*ROOT_REGION];
     let mut region_hierarchies = Vec::new();
     build_tree(&path, &mut region_hierarchies);
     manager.insert_region_hierarchy(region_hierarchies).await?;
