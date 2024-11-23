@@ -1,5 +1,6 @@
 #!/bin/bash
 
-git pull
+git fetch
+git rebase
 cargo build -r
-sudo ./target/debug/clueless
+sudo ./target/release/clueless
