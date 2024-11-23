@@ -87,6 +87,7 @@ async fn delete_offer_request(ref_db: Arc<Mutex<DBManager>>) -> Result<Response<
 
     let (response, status_code) = match manager.cleanup() {
         Ok(_) => {
+            println!("Cleaning up successful");
             (OFFERS_CLEANED_UP, StatusCode::OK)
         },
         Err(_) => {
