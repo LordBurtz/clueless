@@ -11,8 +11,8 @@ pub struct RequestOffer {
     pub time_range_end: i64,
     pub number_days: i32,
     pub sort_order: SortOrder,
-    pub page: i32,
-    pub page_size: i32,
+    pub page: u32,
+    pub page_size: u32,
     pub price_range_width: i32,
     pub min_free_kilometer_width: i32,
     pub min_number_seats: Option<i32>,
@@ -27,7 +27,7 @@ pub struct RequestOffer {
 #[serde(rename_all = "lowercase")]
 #[repr(u8)]
 pub enum CarType {
-    Small = 0,
+    Small  = 0,
     Sports = 1,
     Luxury = 2,
     Family = 3,

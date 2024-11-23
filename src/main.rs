@@ -64,14 +64,15 @@ async fn handle_get_offers_request(req: Request<IncomingBody>, ref_db: Arc<Mutex
 
     let mut manager = ref_db.lock().unwrap();
 
-    let (response, status_code) = match manager.query_mock(request_body) {
+    let (response, status_code) = match manager.query_for(request_body) {
         Ok(res) => {
             // normally use res but now mock
             let json = serde_json::to_string(&mocked_query_result)?;
 
             (full(json), StatusCode::OK)
         },
-        Err(_) => {
+        Err(err) => {
+            println!("{:?}", err);
             (full(INTERNAL_SERVER_ERROR), StatusCode::INTERNAL_SERVER_ERROR)
         }
     };

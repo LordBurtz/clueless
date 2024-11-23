@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use crate::GenericError;
 use crate::json_models::*;
 use rusqlite::*;
+use rusqlite::StatementStatus::Sort;
+use serde_json::de::SliceRead;
 use crate::json_models::{GetReponseBodyModel, CarTypeCount};
 
 pub struct DBManager {
@@ -34,20 +36,22 @@ const SEARCH_QUERY: &str = r#"
     SELECT *
     FROM check24_db
     WHERE
-        regionID = ? AND
-        ? <= startDate AND
-        ? >= endDate AND
-        ? <= numberSeats AND
-        carType = ? AND
-        hasVollkasko = ? AND
-        freeKilometers >= ? AND
-        price BETWEEN ? AND ?
+        mostSpecificRegionID = ?1 AND
+        ?2 <= startDate AND
+        ?3 >= endDate AND
+        ?4 <= numberSeats AND
+        carType = ?5 AND
+        hasVollkasko = ?6 AND
+        freeKilometers >= ?7 AND
+        price BETWEEN ?9 AND ?0;
 "#;
 
 const DELETE_QUERY: &str = r#""DELETE FROM check24_db"#;
 
+const DEBUG_QUERY: &str = r#"SELECT * FROM check24_db;"#;
+
 pub fn open_connection() -> Result<Connection, Error> {
-    let conn = Connection::open_in_memory()?;
+    let conn = Connection::open("test-db.sqlite3")?;
     conn.execute(TABLE_INIT, [])?;
     Ok(conn)
 }
@@ -87,9 +91,21 @@ impl DBManager {
 
 
         let conn = &self.conn;
-        let mut stmt = conn.prepare(SEARCH_QUERY)?;
+        let mut stmt = conn.prepare(DEBUG_QUERY)?;
 
-        let mut results = stmt.query_map(params![request_offer.region_id, request_offer.time_range_start, request_offer.time_range_end,request_offer.min_number_seats, request_offer.car_type.unwrap().as_u8(), request_offer.only_vollkasko, request_offer.min_price, request_offer.max_price], |row| {
+        let mut results =
+            // stmt.query_map(params![
+            //     request_offer.region_id,
+            //     request_offer.time_range_start,
+            //     request_offer.time_range_end,
+            //     request_offer.min_number_seats.unwrap(),
+            //     request_offer.car_type.unwrap().as_u8(),
+            //     request_offer.only_vollkasko.unwrap() as i32,
+            //     request_offer.min_free_kilometer.unwrap(),
+            //     request_offer.min_price.unwrap(),
+            //     request_offer.max_price.unwrap()], |row| {
+            stmt.query_map(params![], |row| {
+
             Ok(Offer{
                 id: row.get(0)?,
                 data: row.get(1)?,
@@ -133,7 +149,6 @@ impl DBManager {
         //
 
         // TODO: only once
-        // setup a list of offers
         let mut vec_offers_price_range = results.by_ref()
             .map(|a| a.ok())
             .filter_map(|a| a)
@@ -142,7 +157,7 @@ impl DBManager {
 
         vec_offers_price_range
             .sort_by(|a, b| a.price.cmp(&b.price));
-        let (head_price_range, tail_price_range) = vec_offers_price_range.split_at(0);
+        let (head_price_range, tail_price_range) = vec_offers_price_range.split_at(1);
 
         // magic number access,
         let first_price_offer = head_price_range.first().unwrap();
@@ -168,6 +183,40 @@ impl DBManager {
             let count = a.len() as i32;
             PriceRange{start, end, count}
         }).collect();
+
+
+        //
+        // Sort orders and paginate
+        //
+
+        let mut orders = results.by_ref()
+            .map(|a| a.ok())
+            .filter_map(|a| a)
+            .collect::<Vec<Offer>>()
+            ;
+
+        match request_offer.sort_order {
+            SortOrder::PriceAsc => orders.sort_by(|a, b| a.number_seats.cmp(&b.number_seats)),
+            SortOrder::PriceDesc => orders.sort_by(|a, b| b.number_seats.cmp(&a.number_seats)),
+        }
+
+
+        //
+        // 190 |   ...       .into_iter()
+        //     |              ----------- `Iterator::Item` remains `&[Offer]` here
+        // note: required by a bound in `std::iter::Iterator::collect`
+        // --> /rustc/f6e511eec7342f59a25f7c0534f1dbea00d01b14/library/core/src/iter/traits/iterator.rs:1996:5
+
+        let paged_offers: Vec<ResponseOffer> = orders.into_iter()
+            //TODO: double check if pagination starts at 1
+            .skip(((request_offer.page - 1) * request_offer.page_size) as usize)
+            .take(request_offer.page_size as usize)
+            .map(|o| {
+                ResponseOffer{ID: o.id, data: o.data}
+            })
+            .collect();
+
+
 
 
         //
@@ -208,7 +257,7 @@ impl DBManager {
 
         vec_offers_free_kilometers
             .sort_by(|a, b| a.free_kilometers.cmp(&b.free_kilometers));
-        let (head_free_km, tail_free_km) = vec_offers_free_kilometers.split_at(0);
+        let (head_free_km, tail_free_km) = vec_offers_free_kilometers.split_at(1);
 
         // magic number access,
         let first_km = head_free_km.first().unwrap();
@@ -236,7 +285,7 @@ impl DBManager {
         }).collect();
 
         return Ok(GetReponseBodyModel{
-            offers: vec![],
+            offers: paged_offers,
             price_ranges: price_range_bucket,
             car_type_counts: CarTypeCount {
                 small, sports, luxury, family
