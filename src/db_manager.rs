@@ -351,35 +351,31 @@ impl DBManager {
     fn toFreeKilometersOffers(offers: &Vec<Offer>, min_free_kilometer_width: u32) ->  Vec<FreeKilometerRange> {
         let mut vec_offers_free_kilometers = offers.clone();
         vec_offers_free_kilometers.sort_by(|a, b| a.free_kilometers.cmp(&b.free_kilometers));
-        let (head_free_km, tail_free_km) = vec_offers_free_kilometers.split_at(1);
+        let head = vec_offers_free_kilometers.first().unwrap();
 
         // magic number access,
-        let first_km = head_free_km.first().unwrap();
 
-        let mut lower_bound_free_km =
-            first_km.free_kilometers + min_free_kilometer_width;
 
-        let mut km_vec_vec: Vec<Vec<&Offer>> = vec![]; // i literally do not care
-        km_vec_vec.push(vec![first_km]);
+        let mut lower_bound_free_km = (head.free_kilometers % min_free_kilometer_width) * min_free_kilometer_width;
 
-        for offer in tail_free_km {
-            if offer.free_kilometers < lower_bound_free_km {
-                km_vec_vec.last_mut().unwrap().push(offer);
+        // let mut lower_bound_free_km =
+        //     first_km.free_kilometers + min_free_kilometer_width;
+
+        let mut km_vec_vec: Vec<FreeKilometerRange> = vec![]; // i literally do not care
+        km_vec_vec.push(crate::json_models::FreeKilometerRange{start: lower_bound_free_km, end: lower_bound_free_km + min_free_kilometer_width, count: 0});
+
+
+        for offer in vec_offers_free_kilometers {
+            let FreeKilometerRange{start, end, count} = km_vec_vec.last_mut().unwrap();
+            if offer.free_kilometers < *end {
+                *count += 1
             } else {
-                lower_bound_free_km += min_free_kilometer_width;
-                km_vec_vec.push(vec![offer]);
+                lower_bound_free_km = (offer.free_kilometers % min_free_kilometer_width) * min_free_kilometer_width;
+                km_vec_vec.push(FreeKilometerRange{start: lower_bound_free_km, end:  lower_bound_free_km + min_free_kilometer_width, count: 0});
             }
         }
 
-        return km_vec_vec
-            .iter()
-            .map(|a| {
-                let start = a.first().unwrap().free_kilometers;
-                let end = a.last().unwrap().free_kilometers;
-                let count = a.len() as u32;
-                FreeKilometerRange { start, end, count }
-            })
-            .collect();
+        return km_vec_vec;
     }
 
     fn toVollkaskoOffers(offers: &Vec<Offer>) -> (VollKaskoCount, CarTypeCount) {
