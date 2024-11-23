@@ -307,7 +307,7 @@ impl DBManager {
         return possible_filtered_offers
             .into_iter()
             //TODO: double check if pagination starts at 1
-            .skip(((request_offer.page - 1) * request_offer.page_size) as usize)
+            .skip(((request_offer.page) * request_offer.page_size) as usize)
             .take(request_offer.page_size as usize)
             .map(|o| ResponseOffer {
                 ID: o.id,
