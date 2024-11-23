@@ -148,7 +148,7 @@ impl DBManager {
             rh.ancestor_id = ? AND
             ? <= start_date AND
             ? >= end_date AND
-            end_date - start_date >= ?"
+            end_date - start_date = ?"
             .to_string();
 
         let mut query = self
