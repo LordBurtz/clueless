@@ -1,4 +1,4 @@
-use clickhouse::Row;
+use crate::db_models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -6,43 +6,38 @@ use serde::{Deserialize, Serialize};
 pub struct RequestOffer {
     #[serde(rename = "regionID")]
     pub region_id: u8,
-    pub time_range_start: i64,
-    pub time_range_end: i64,
+    pub time_range_start: u64,
+    pub time_range_end: u64,
     pub number_days: i32,
     pub sort_order: SortOrder,
     pub page: u32,
     pub page_size: u32,
-    pub price_range_width: i32,
-    pub min_free_kilometer_width: i32,
-    pub min_number_seats: Option<i32>,
-    pub min_price: Option<i32>,
-    pub max_price: Option<i32>,
+    pub price_range_width: u32,
+    pub min_free_kilometer_width: u32,
+    pub min_number_seats: Option<u32>,
+    pub min_price: Option<u32>,
+    pub max_price: Option<u32>,
     pub car_type: Option<CarType>,
     pub only_vollkasko: Option<bool>,
-    pub min_free_kilometer: Option<i32>,
+    pub min_free_kilometer: Option<u32>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone)]
 #[serde(rename_all = "lowercase")]
-#[repr(u8)]
 pub enum CarType {
-    Small  = 0,
-    Sports = 1,
-    Luxury = 2,
-    Family = 3,
+    Small,
+    Sports,
+    Luxury,
+    Family,
 }
 
-impl CarType {
-    pub fn as_u8(&self) -> u8 {
-        *self as u8
-    }
-
-    pub fn to_enum(num: u8) -> CarType {
-        match num {
-            0 => CarType::Small,
-            1 => CarType::Sports,
-            2 => CarType::Luxury,
-            _ => CarType::Family,
+impl From<CarType> for db_models::CarType {
+    fn from(car_type: CarType) -> Self {
+        match car_type {
+            CarType::Small => db_models::CarType::Small,
+            CarType::Sports => db_models::CarType::Sports,
+            CarType::Luxury => db_models::CarType::Luxury,
+            CarType::Family => db_models::CarType::Family,
         }
     }
 }
@@ -68,14 +63,14 @@ pub struct GetReponseBodyModel {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ResponseOffer {
     pub ID: String,
-    pub data: String // encoded as base64
+    pub data: String, // encoded as base64
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PriceRange {
-    pub start: i32,
-    pub end: i32,
-    pub count: i32,
+    pub start: u32,
+    pub end: u32,
+    pub count: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -89,22 +84,22 @@ pub struct CarTypeCount {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct SeatCount {
-    pub count: i32,
-    pub number_seats: i32,
+    pub count: u32,
+    pub number_seats: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct FreeKilometerRange {
-    pub start: i32,
-    pub end: i32,
-    pub count: i32,
+    pub start: u32,
+    pub end: u32,
+    pub count: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct VollKaskoCount {
-    pub true_count: i32,
-    pub false_count: i32,
+    pub true_count: u32,
+    pub false_count: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -113,23 +108,22 @@ pub struct PostRequestBodyModel {
     pub offers: Vec<Offer>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Row)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Offer {
     #[serde(rename = "ID")]
     pub id: String,
     // TODO: optimize?
     pub data: String, // base64 encoded 256 Byte array
-    pub most_specific_region_ID: i32,
-    pub start_date: i64,
-    pub end_date: i64,
-    pub number_seats: i32,
-    pub price: i32,
+    pub most_specific_region_ID: u32,
+    pub start_date: u64,
+    pub end_date: u64,
+    pub number_seats: u32,
+    pub price: u32,
     pub car_type: CarType,
     pub has_vollkasko: bool,
-    pub free_kilometers: i32,
+    pub free_kilometers: u32,
 }
-
 
 pub const SAMPLE_GET_RESPONSE: &str = r#"
 {

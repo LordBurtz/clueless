@@ -1,29 +1,16 @@
-use clickhouse::query::Query;
+use crate::db_models::{CarType, Offer};
 use crate::json_models::*;
-use crate::json_models::{CarTypeCount, GetReponseBodyModel};
+use crate::json_models::{
+    CarTypeCount, FreeKilometerRange, GetReponseBodyModel, PostRequestBodyModel, PriceRange,
+    RequestOffer, ResponseOffer, SeatCount, SortOrder, VollKaskoCount,
+};
 use crate::GenericError;
 use clickhouse::sql::Bind;
-use serde::Serialize;
 
 #[derive(Clone)]
 pub struct DBManager {
     client: clickhouse::Client,
 }
-
-const TABLE_INIT: &str = r#"
-    CREATE TABLE IF NOT EXISTS check24_db (
-        ID VARCHAR(36) PRIMARY KEY, -- UUID format
-        data VARCHAR(256) NOT NULL,
-        mostSpecificRegionID INT NOT NULL,
-        startDate BIGINT NOT NULL,
-        endDate BIGINT NOT NULL,
-        numberSeats INT NOT NULL,
-        price INT NOT NULL,
-        carType INT, -- Car type is a string
-        hasVollkasko BOOLEAN NOT NULL,
-        freeKilometers INT NOT NULL
-    );
-"#;
 
 const INSERT_QUERY: &str = r#"
     INSERT INTO check24_db
@@ -52,6 +39,31 @@ impl DBManager {
         Self { client }
     }
 
+    pub async fn init(&self) -> Result<(), GenericError> {
+        self.client
+            .query(
+                r#"
+    CREATE TABLE IF NOT EXISTS offers (
+        id VARCHAR(36) PRIMARY KEY,
+        data VARCHAR(256) NOT NULL,
+        most_specific_region_id UInt32 NOT NULL,
+        start_date UInt64 NOT NULL,
+        end_date UInt64 NOT NULL,
+        number_seats UInt32 NOT NULL,
+        price UInt32 NOT NULL,
+        car_type UInt8, -- Car type is a string
+        has_vollkasko BOOLEAN NOT NULL,
+        free_kilometers UInt32 NOT NULL
+    )
+    ENGINE = MergeTree
+    ORDER BY (id, has_vollkasko, car_type, number_seats, most_specific_region_id, free_kilometers, price, start_date, end_date)
+"#,
+            )
+            .execute()
+            .await?;
+        Ok(())
+    }
+
     pub async fn insert_offers(&self, offers: PostRequestBodyModel) -> Result<(), GenericError> {
         let mut insert = self.client.insert("offers")?;
 
@@ -60,12 +72,12 @@ impl DBManager {
                 .write(&Offer {
                     id: offer.id,
                     data: offer.data,
-                    most_specific_region_ID: offer.most_specific_region_ID,
+                    most_specific_region_id: offer.most_specific_region_ID,
                     start_date: offer.start_date,
                     end_date: offer.end_date,
                     number_seats: offer.number_seats,
                     price: offer.price,
-                    car_type: offer.car_type,
+                    car_type: offer.car_type.into(),
                     has_vollkasko: offer.has_vollkasko,
                     free_kilometers: offer.free_kilometers,
                 })
@@ -82,27 +94,28 @@ impl DBManager {
         request_offer: RequestOffer,
     ) -> Result<GetReponseBodyModel, GenericError> {
         let mut query_parameters: Vec<String> = Vec::new();
-        let mut query_string: String = " SELECT ?fields
+        let mut query_string: String = "SELECT ?fields
         FROM offers
         WHERE
-        mostSpecificRegionID = ? AND
-            ? <= startDate AND
-            ? >= endDate".to_string();
+        most_specific_region_id = ? AND
+            ? <= start_date AND
+            ? >= end_date"
+            .to_string();
 
         if let Some(numberOfSeats) = request_offer.min_number_seats {
-            query_string.push_str("AND ? <= numberSeats");
+            query_string.push_str("AND ? <= number_seats");
             query_parameters.push(numberOfSeats.to_string());
         }
         if let Some(carType) = request_offer.car_type {
-            query_string.push_str(" AND carType = ?");
-            query_parameters.push(carType.as_u8().to_string());
+            query_string.push_str(" AND car_type = ?");
+            query_parameters.push((carType as u8).to_string());
         }
         if let Some(hasVollkasko) = request_offer.only_vollkasko {
-            query_string.push_str(" AND hasVollkasko = ?");
+            query_string.push_str(" AND has_vollkasko = ?");
             query_parameters.push(hasVollkasko.to_string());
         }
         if let Some(freeKilometers) = request_offer.min_free_kilometer {
-            query_string.push_str(" AND freeKilometers >= ?");
+            query_string.push_str(" AND free_kilometers >= ?");
             query_parameters.push(freeKilometers.to_string());
         }
         if let Some(minPrice) = request_offer.min_price {
@@ -116,16 +129,16 @@ impl DBManager {
         }
         let mut query = self
             .client
-            .query(&*query_string)
-            ;
+            .query(&query_string)
+            .bind(request_offer.region_id)
+            .bind(request_offer.time_range_start)
+            .bind(request_offer.time_range_end);
 
         for param in query_parameters {
             query = query.bind(&param);
         }
 
-        let mut offers = query
-            .fetch_all::<Offer>()
-            .await?;
+        let mut offers = query.fetch_all::<Offer>().await?;
 
         // counts for vollkasko occurences
         let (mut true_count, mut false_count) = (0, 0);
@@ -182,7 +195,7 @@ impl DBManager {
             .map(|a| {
                 let start = a.first().unwrap().price;
                 let end = a.last().unwrap().price;
-                let count = a.len() as i32;
+                let count = a.len() as u32;
                 PriceRange { start, end, count }
             })
             .collect();
@@ -225,7 +238,7 @@ impl DBManager {
             .chunk_by(|a, b| a.number_seats == b.number_seats)
             .map(|chunk| {
                 let number_seats = chunk.first().unwrap().number_seats;
-                let count = chunk.len() as i32;
+                let count = chunk.len() as u32;
                 SeatCount {
                     number_seats,
                     count,
@@ -266,7 +279,7 @@ impl DBManager {
             .map(|a| {
                 let start = a.first().unwrap().free_kilometers;
                 let end = a.last().unwrap().free_kilometers;
-                let count = a.len() as i32;
+                let count = a.len() as u32;
                 FreeKilometerRange { start, end, count }
             })
             .collect();

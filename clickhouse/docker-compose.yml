@@ -9,16 +9,22 @@ services:
     volumes:
       - ./data:/var/lib/clickhouse
       - ./logs:/var/log/clickhouse-server
+      - /sys/kernel/mm/transparent_hugepage:/sys/kernel/mm/transparent_hugepage:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
     environment:
-      CLICKHOUSE_USER: clickhouse
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
-      CLICKHOUSE_PASSWORD: password
+      ALLOW_EMPTY_PASSWORD: yes
       CLICKHOUSE_DB: check24
-    network_mode: host
     ports:
-      - "8123:8123"
+      - "8002:9000"
+      - "8123:8123"  # Changed HTTP port mapping
     cap_add:
       - SYS_NICE
       - NET_ADMIN
       - IPC_LOCK
       - SYS_PTRACE
+    networks:
+      - ch_network
+networks:
+  ch_network:
+    driver: bridge

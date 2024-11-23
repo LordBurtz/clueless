@@ -1,6 +1,7 @@
 // #![deny(warnings)]
 mod db_manager;
 mod json_models;
+mod db_models;
 
 use json_models::*;
 
@@ -130,11 +131,11 @@ async fn main() -> Result<()> {
     // pretty_env_logger::init();
     let db_client = clickhouse::Client::default()
         .with_url("http://localhost:8123")
-        .with_user("clickhouse")
-        .with_password("password")
+        .with_user("default")
         .with_database("check24");
 
     let db_manager = Arc::new(DBManager::new(db_client));
+    db_manager.init().await?;
 
     let addr: SocketAddr = "127.0.0.1:3000".parse().unwrap();
 
