@@ -31,7 +31,10 @@ def parse_log_file(log_file_path, output_dir):
                         read_offers.append(log_entry.get('log', [])['search_config'])
                         wanted_cases.append(log_entry.get('log', [])['expected_result'])
                         actual_cases.append(log_entry.get('log', [])['actual_result'])
-
+                        wanted = log_entry.get('log', [])['expected_result']
+                        actual = log_entry.get('log', [])['actual_result']
+                        if wanted != actual:
+                            failed_cases.append(log_entry.get('log', [])['search_config'])
                 except json.JSONDecodeError:
                     continue
 
