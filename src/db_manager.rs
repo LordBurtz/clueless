@@ -284,7 +284,7 @@ impl DBManager {
                 }
             }
             if let Some(carType) = request_offer.car_type {
-                if a.car_type.eqMe(&carType) {
+                if a.car_type.eqMe(&carType) == false {
                     return false;
                 }
             }
