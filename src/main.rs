@@ -1,5 +1,6 @@
 // #![deny(warnings)]
 mod json_models;
+mod db_manager;
 
 use json_models::*;
 
@@ -19,13 +20,15 @@ type BoxBody = http_body_util::combinators::BoxBody<Bytes, hyper::Error>;
 
 static INTERNAL_SERVER_ERROR: &[u8] = b"Internal Server Error";
 static NOTFOUND: &[u8] = b"Not Found";
+
+
 async fn api_post_response(req: Request<IncomingBody>) -> Result<Response<BoxBody>> {
     // Aggregate the body...
     let whole_body = req.collect().await?.aggregate();
     // Decode as JSON...
-    let mut data: serde_json::Value = serde_json::from_reader(whole_body.reader())?;
+    // let mut data: serde_json::Value = serde_json::from_reader(whole_body.reader())?;
 
-    let test: PostRequestBodyModel = serde_json::from_value(data)?;
+    let test: PostRequestBodyModel = serde_json::from_reader(whole_body.reader())?;
 
     // Change the JSON...
     // data["test"] = serde_json::Value::from("test_value");
