@@ -17,7 +17,7 @@ pub struct Offer {
     pub free_kilometers: u32,
 }
 
-#[derive(Serialize_repr, Deserialize_repr, Debug, Copy, Clone)]
+#[derive(Serialize_repr, Deserialize_repr, Debug, Copy, Clone, PartialEq, Eq)]
 #[repr(u8)]
 pub enum CarType {
     Small = 0,

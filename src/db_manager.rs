@@ -151,68 +151,23 @@ impl DBManager {
             end_date - start_date >= ?"
             .to_string();
 
-        /// For now commented out as we filter in rust, not sql
-        // if request_offer.min_number_seats.is_some() {
-        //     query_string.push_str("AND ? <= number_seats");
-        // }
-        // if request_offer.car_type.is_some() {
-        //     query_string.push_str(" AND car_type = ?");
-        // }
-        // if request_offer.only_vollkasko.is_some() {
-        //     query_string.push_str(" AND has_vollkasko = ?");
-        // }
-        // if request_offer.min_free_kilometer.is_some() {
-        //     query_string.push_str(" AND free_kilometers >= ?");
-        // }
-        // if request_offer.min_price.is_some() {
-        //     if request_offer.max_price.is_some() {
-        //         query_string.push_str(" AND price BETWEEN ? AND ?");
-        //     } else {
-        //         query_string.push_str(" AND price >= ?");
-        //     }
-        // }
-        let mut query = self.client.query(&query_string).bind(
-            request_offer
-                .region_id
-        ).bind(
-            request_offer
-                .time_range_start
-        ).bind(
-            request_offer
-                .time_range_end
-        ).bind(
-            request_offer
-                .number_days * 24 * 60 * 60 * 1000
-        );
+        let mut query = self
+            .client
+            .query(&query_string)
+            .bind(request_offer.region_id)
+            .bind(request_offer.time_range_start)
+            .bind(request_offer.time_range_end)
+            .bind(request_offer.number_days * 24 * 60 * 60 * 1000);
 
-        /// For now commented out, as we filter not in sql but in rust
-        // if let Some(numberOfSeats) = request_offer.min_number_seats {
-        //     query = query.bind(numberOfSeats);
-        // }
-        // if let ®Some(carType) = request_offer.car_type {
-        //     query = query.bind(carType as u32);
-        // }
-        // if let Some(hasVollkasko) = request_offer.only_vollkasko {
-        //     query = query.bind(hasVollkasko);
-        // }
-        // if let Some(freeKilometers) = request_offer.min_free_kilometer {
-        //     query = query.bind(freeKilometers);
-        // }
-        // if let Some(minPrice) = request_offer.min_price {
-        //     query = query.bind(minPrice);
-        //     if let Some(maxPrice) = request_offer.max_price {
-        //         query = query.bind(maxPrice);
-        //     }
-        // }
 
         //
         //Results of db query
         //
-
         let offers = query.fetch_all::<Offer>().await?;
 
+        // todo passt eig so
         if offers.is_empty() {
-            return Ok(crate::json_models::GetReponseBodyModel{
+            return Ok(crate::json_models::GetReponseBodyModel {
                 offers: vec![],
                 price_ranges: vec![],
                 car_type_counts: CarTypeCount {
@@ -223,32 +178,135 @@ impl DBManager {
                 },
                 seats_count: vec![],
                 free_kilometer_range: vec![],
-                vollkasko_count: VollKaskoCount { true_count: 0, false_count: 0 },
-            })
+                vollkasko_count: VollKaskoCount {
+                    true_count: 0,
+                    false_count: 0,
+                },
+            });
         }
-        
+
+        let mut filtered_offers = vec![];
+        let mut seats_filter_excl = vec![];
+        let mut car_type_filter_excl = vec![];
+        let mut has_vollkasko_filter_excl = vec![];
+        let mut free_kilometers_filter_excl = vec![];
+        let mut price_range_filter_excl = vec![];
+
+        for offer in &offers {
+            let mut seats_incl = true;
+            let mut car_type_incl = true;
+            let mut has_vollkasko_incl = true;
+            let mut free_kilometers_incl = true;
+            let mut price_range_incl = true;
+
+            if let Some(minNumberOfSeats) = request_offer.min_number_seats {
+                if offer.number_seats < minNumberOfSeats {
+                    seats_incl = false;
+                }
+            }
+            if let Some(carType) = request_offer.car_type {
+                if offer.car_type.eqMe(&carType) {
+                    car_type_incl = false
+                }
+            }
+            if let Some(hasVollkasko) = request_offer.only_vollkasko {
+                if offer.has_vollkasko != hasVollkasko {
+                    has_vollkasko_incl = false;
+                }
+            }
+            if let Some(minFreeKilometers) = request_offer.min_free_kilometer {
+                if offer.free_kilometers < minFreeKilometers {
+                    free_kilometers_incl = false;
+                }
+            }
+            if let Some(maxPrice) = request_offer.max_price {
+                if (maxPrice <= offer.price) {
+                    price_range_incl = false;
+                }
+            }
+            if let Some(minPrice) = request_offer.min_price {
+                if minPrice > offer.price {
+                    price_range_incl = false;
+                }
+            }
+            match (
+                seats_incl,
+                car_type_incl,
+                has_vollkasko_incl,
+                free_kilometers_incl,
+                price_range_incl,
+            ) {
+                (true, true, true, true, true) => filtered_offers.push(offer),
+                (true, true, true, true, false) => price_range_filter_excl.push(offer),
+                (true, true, true, false, true) => free_kilometers_filter_excl.push(offer),
+                (true, true, false, true, true) => has_vollkasko_filter_excl.push(offer),
+                (true, false, true, true, true) => car_type_filter_excl.push(offer),
+                (false, true, true, true, true) => seats_filter_excl.push(offer),
+                _ => {}
+            }
+        }
+
+        let filtered_offers_count = filtered_offers.len() as u32;
+
         //
         // Count vollkasko and car type options
         //
 
-        let (vollkasko_count, car_type_count) =
-            Self::toVollkaskoOffers(offers.as_ref());
+        let vollkasko_count = match request_offer.only_vollkasko {
+            None => VollKaskoCount {
+                true_count: filtered_offers
+                    .iter()
+                    .filter(|offer| offer.has_vollkasko)
+                    .count() as u32,
+                false_count: filtered_offers
+                    .iter()
+                    .filter(|offer| !offer.has_vollkasko)
+                    .count() as u32,
+            },
+            Some(only_vollkasko) => VollKaskoCount {
+                true_count: filtered_offers_count
+                    + if only_vollkasko {
+                    0
+                } else {
+                    has_vollkasko_filter_excl.len() as u32
+                },
+                false_count: filtered_offers_count
+                    + if !only_vollkasko {
+                    0
+                } else {
+                    has_vollkasko_filter_excl.len() as u32
+                },
+            },
+        };
 
+        // let car_type_count =
+            // Self::get_car_type_count(&offers, &car_type_filter_excl, &request_offer);
 
         //
         // price range slicing
         //
 
-        let price_range_bucket=
-            Self::toPriceRangesOffers(offers.as_ref(), request_offer.price_range_width);
-
+        let price_range_bucket = Self::toPriceRangesOffers(
+            offers.iter().chain(price_range_filter_excl),
+            request_offer.price_range_width,
+        );
 
         //
         // free kilometers slicing
         //
 
-        let free_kilometer_range_bucket =
-            Self::toFreeKilometersOffers(offers.as_ref(), request_offer.min_free_kilometer_width);
+        let vollkasko_count2 =
+            Self::toVollkaskoOffers(offers.iter().chain(has_vollkasko_filter_excl));
+        // let defsi = car_type_count;
+        let sid = vollkasko_count;
+        let car_type_count2 = Self::to_car_type_count(offers.iter().chain(car_type_filter_excl));
+
+
+        let listForIt = (filtered_offers.iter().copied().chain(free_kilometers_filter_excl));
+        let free_kilometer_bucket = Self::toFreeKilometersOffers(
+            listForIt,
+            request_offer.min_free_kilometer_width,
+        );
 
 
         //
@@ -256,70 +314,104 @@ impl DBManager {
         //
 
         let seatCountVec =
-            Self::toSeatNumberOffers(offers.as_ref());
-
+            Self::toSeatNumberOffers(filtered_offers.iter().copied().chain(seats_filter_excl));
 
         //
         // Apply all optional filters, then paginate and return
         //
 
-        let paged_offers =
-            Self::sortOrdersAndPaginate(offers, request_offer);
+        let paged_offers = Self::sortOrdersAndPaginate(filtered_offers, request_offer);
 
         return Ok(GetReponseBodyModel {
             offers: paged_offers,
             price_ranges: price_range_bucket,
-            car_type_counts: car_type_count,
+            car_type_counts: car_type_count2,
             seats_count: seatCountVec,
-            free_kilometer_range: free_kilometer_range_bucket,
-            vollkasko_count: vollkasko_count,
+            free_kilometer_range: free_kilometer_bucket,
+            vollkasko_count: vollkasko_count2,
         });
     }
 
-    fn sortOrdersAndPaginate(offers: Vec<Offer>, request_offer: RequestOffer) -> Vec<ResponseOffer> {
-        let mut possible_filtered_offers: Vec<Offer> =  offers.into_iter().filter(|a| {
-            if let Some(numberOfSeats) = request_offer.min_number_seats {
-                if a.number_seats < numberOfSeats {
-                    return false;
-                }
-            }
-            if let Some(carType) = request_offer.car_type {
-                if a.car_type.eqMe(&carType) == false {
-                    return false;
-                }
-            }
-            if let Some(hasVollkasko) = request_offer.only_vollkasko {
-                if a.has_vollkasko != hasVollkasko {
-                    return false;
-                }
-            }
-            if let Some(freeKilometers) = request_offer.min_free_kilometer {
-                if a.free_kilometers < freeKilometers {
-                    return false;
-                }
-            }
-            if let Some(minPrice) = request_offer.min_price {
-                if let Some(maxPrice) = request_offer.max_price {
-                    if (maxPrice <= a.price) {
-                        return false;
-                    }
-                }
-                if minPrice > a.price {
-                    return false;
-                }
-            }
-            return true;
-        }).collect::<Vec<Offer>>();
+    // fn get_car_type_count(
+    //     offers: &[Offer],
+    //     excluded_offers: &[Offer],
+    //     request_offer: &RequestOffer,
+    // ) -> CarTypeCount {
+    //     let filtered_offers_count = offers.len() as u32;
+    //     match request_offer.car_type {
+    //         None => {
+    //             let mut small = 0;
+    //             let mut sports = 0;
+    //             let mut luxury = 0;
+    //             let mut family = 0;
+    //             for offer in offers {
+    //                 match offer.car_type {
+    //                     CarType::Small => small += 1,
+    //                     CarType::Sports => sports += 1,
+    //                     CarType::Luxury => luxury += 1,
+    //                     CarType::Family => family += 1
+    //                 }
+    //             }
+    //             CarTypeCount {
+    //                 small,
+    //                 sports,
+    //                 luxury,
+    //                 family,
+    //             }
+    //         }
+    //         Some(filtered_car_type) => {
+    //             let mut small_excluded = 0;
+    //             let mut family_excluded = 0;
+    //             let mut luxury_excluded = 0;
+    //             let mut sports_excluded = 0;
+    //             for offer in excluded_offers {
+    //                 match offer.car_type {
+    //                     CarType::Small => small_excluded += 1,
+    //                     CarType::Sports => sports_excluded += 1,
+    //                     CarType::Luxury => luxury_excluded += 1,
+    //                     CarType::Family => family_excluded += 1,
+    //                 };
+    //             }
+    //             CarTypeCount {
+    //                 small: if (filtered_car_type.into() == CarType::Small) {
+    //                     filtered_offers_count
+    //                 } else {
+    //                     small_excluded
+    //                 },
+    //                 sports: if (filtered_car_type.into() == CarType::Sports) {
+    //                     filtered_offers_count
+    //                 } else {
+    //                     sports_excluded
+    //                 },
+    //                 luxury: if (filtered_car_type.into() == CarType::Luxury) {
+    //                     filtered_offers_count
+    //                 } else {
+    //                     luxury_excluded
+    //                 },
+    //                 family: if (filtered_car_type.into() == CarType::Family) {
+    //                     filtered_offers_count
+    //                 } else {
+    //                     family_excluded
+    //                 },
+    //             }
+    //         }
+    //     }
+    // }
 
+    fn sortOrdersAndPaginate(
+        offers: Vec<&Offer>,
+        request_offer: RequestOffer,
+    ) -> Vec<ResponseOffer> {
+        let mut local_offers = offers.into_iter().cloned().collect::<Vec<Offer>>();
         match request_offer.sort_order {
-            SortOrder::PriceAsc => possible_filtered_offers.sort_by(|a, b| {
+            SortOrder::PriceAsc => local_offers.sort_by(|a, b| {
                 let comp = a.price.cmp(&b.price);
                 if comp.is_eq() {
                     return a.id.cmp(&b.id);
                 }
                 return comp;
             }),
-            SortOrder::PriceDesc => possible_filtered_offers.sort_by(|a, b| {
+            SortOrder::PriceDesc => local_offers.sort_by(|a, b| {
                 let comp = b.price.cmp(&a.price);
                 if comp.is_eq() {
                     return a.id.cmp(&b.id);
@@ -328,55 +420,62 @@ impl DBManager {
             }),
         }
 
-        return possible_filtered_offers
+        local_offers
             .into_iter()
-            //TODO: double check if pagination starts at 1
-            .skip(((request_offer.page) * request_offer.page_size) as usize)
+            .skip(((request_offer.page) * request_offer.page_size) as usize) // pagination starts at 0
             .take(request_offer.page_size as usize)
             .map(|o| ResponseOffer {
                 ID: o.id,
                 data: o.data,
             })
-            .collect();
+            .collect()
     }
 
-    fn toFreeKilometersOffers(offers: &Vec<Offer>, min_free_kilometer_width: u32) ->  Vec<FreeKilometerRange> {
-        let mut vec_offers_free_kilometers = offers.clone();
+    fn toFreeKilometersOffers<'a>(
+        offers: impl Iterator<Item=&'a Offer>,
+        min_free_kilometer_width: u32,
+    ) -> Vec<FreeKilometerRange> {
+        let mut vec_offers_free_kilometers = offers.collect::<Vec<&Offer>>();
         vec_offers_free_kilometers.sort_by(|a, b| a.free_kilometers.cmp(&b.free_kilometers));
         let head = vec_offers_free_kilometers.first().unwrap();
 
         // magic number access,
 
-
-        let mut lower_bound_free_km = (head.free_kilometers / min_free_kilometer_width) * min_free_kilometer_width;
+        let mut lower_bound_free_km =
+            (head.free_kilometers / min_free_kilometer_width) * min_free_kilometer_width;
 
         // let mut lower_bound_free_km =
         //     first_km.free_kilometers + min_free_kilometer_width;
 
         let mut km_vec_vec: Vec<FreeKilometerRange> = vec![]; // i literally do not care
-        km_vec_vec.push(crate::json_models::FreeKilometerRange{start: lower_bound_free_km, end: lower_bound_free_km + min_free_kilometer_width, count: 0});
-
+        km_vec_vec.push(crate::json_models::FreeKilometerRange {
+            start: lower_bound_free_km,
+            end: lower_bound_free_km + min_free_kilometer_width,
+            count: 0,
+        });
 
         for offer in vec_offers_free_kilometers {
-            let FreeKilometerRange{start, end, count} = km_vec_vec.last_mut().unwrap();
+            let FreeKilometerRange { start, end, count } = km_vec_vec.last_mut().unwrap();
             if offer.free_kilometers < *end {
                 *count += 1
             } else {
                 // TODO: helper method
-                lower_bound_free_km = (offer.free_kilometers / min_free_kilometer_width) * min_free_kilometer_width;
-                km_vec_vec.push(FreeKilometerRange{start: lower_bound_free_km, end:  lower_bound_free_km + min_free_kilometer_width, count: 1});
+                lower_bound_free_km =
+                    (offer.free_kilometers / min_free_kilometer_width) * min_free_kilometer_width;
+                km_vec_vec.push(FreeKilometerRange {
+                    start: lower_bound_free_km,
+                    end: lower_bound_free_km + min_free_kilometer_width,
+                    count: 1,
+                });
             }
         }
 
         return km_vec_vec;
     }
 
-    fn toVollkaskoOffers(offers: &Vec<Offer>) -> (VollKaskoCount, CarTypeCount) {
+    fn toVollkaskoOffers<'a>(offers: impl Iterator<Item=&'a Offer>) -> VollKaskoCount {
         // counts for vollkasko occurences
         let (mut true_count, mut false_count) = (0, 0);
-
-        // counts for car types
-        let (mut small, mut sports, mut luxury, mut family) = (0, 0, 0, 0);
 
         for offer in offers {
             if offer.has_vollkasko {
@@ -384,7 +483,19 @@ impl DBManager {
             } else {
                 false_count += 1
             }
+        }
 
+        VollKaskoCount {
+            true_count,
+            false_count,
+        }
+    }
+
+    fn to_car_type_count<'a>(offers: impl Iterator<Item=&'a Offer>) -> CarTypeCount {
+        // counts for car types
+        let (mut small, mut sports, mut luxury, mut family) = (0, 0, 0, 0);
+
+        for offer in offers {
             match (offer.car_type) {
                 CarType::Small => small += 1,
                 CarType::Sports => sports += 1,
@@ -393,29 +504,24 @@ impl DBManager {
             }
         }
 
-        let vollkasko_count = VollKaskoCount {
-            true_count,
-            false_count,
-        };
-
-        let car_type_count = CarTypeCount {
+        CarTypeCount {
             small,
             sports,
             luxury,
             family,
-        };
-
-        (vollkasko_count, car_type_count)
+        }
     }
 
-    pub fn toPriceRangesOffers(offers: &Vec<Offer>, price_range_width: u32) -> Vec<PriceRange> {
-        let mut vec_offers_price_range = offers.clone();
+    pub fn toPriceRangesOffers<'a>(
+        offers: impl Iterator<Item=&'a Offer>,
+        price_range_width: u32,
+    ) -> Vec<PriceRange> {
+        let mut vec_offers_price_range = offers.collect::<Vec<&Offer>>();
 
         vec_offers_price_range.sort_by(|a, b| a.price.cmp(&b.price));
         let head = vec_offers_price_range.first().unwrap();
 
         // magic number access,
-
 
         // TODO: rename later
         let mut lower_bound_free_km = (head.price / price_range_width) * price_range_width;
@@ -424,25 +530,32 @@ impl DBManager {
         //     first_km.free_kilometers + min_free_kilometer_width;
 
         let mut km_vec_vec: Vec<PriceRange> = vec![]; // i literally do not care
-        km_vec_vec.push(crate::json_models::PriceRange{start: lower_bound_free_km, end: lower_bound_free_km + price_range_width, count: 0});
-
+        km_vec_vec.push(crate::json_models::PriceRange {
+            start: lower_bound_free_km,
+            end: lower_bound_free_km + price_range_width,
+            count: 0,
+        });
 
         for offer in vec_offers_price_range {
-            let PriceRange{start, end, count} = km_vec_vec.last_mut().unwrap();
+            let PriceRange { start, end, count } = km_vec_vec.last_mut().unwrap();
             if offer.price < *end {
                 *count += 1
             } else {
                 // TODO: helper method
                 lower_bound_free_km = (offer.price / price_range_width) * price_range_width;
-                km_vec_vec.push(PriceRange{start: lower_bound_free_km, end:  lower_bound_free_km + price_range_width, count: 1});
+                km_vec_vec.push(PriceRange {
+                    start: lower_bound_free_km,
+                    end: lower_bound_free_km + price_range_width,
+                    count: 1,
+                });
             }
         }
 
         return km_vec_vec;
     }
 
-    pub fn toSeatNumberOffers(offers: &Vec<Offer>) -> Vec<SeatCount> {
-        let mut vec_number_seats = offers.clone();
+    pub fn toSeatNumberOffers<'a>(offers: impl Iterator<Item=&'a Offer>) -> Vec<SeatCount> {
+        let mut vec_number_seats = offers.collect::<Vec<&Offer>>();
         vec_number_seats.sort_by(|a, b| a.number_seats.cmp(&b.number_seats));
 
         return vec_number_seats
@@ -457,9 +570,6 @@ impl DBManager {
             })
             .collect::<Vec<SeatCount>>();
     }
-
-
-
 
     pub async fn cleanup(&self) -> Result<(), GenericError> {
         self.client.query("TRUNCATE TABLE offers").execute().await?;

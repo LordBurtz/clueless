@@ -87,10 +87,10 @@ pub struct PriceRange {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CarTypeCount {
-    pub small: i32,
-    pub sports: i32,
-    pub luxury: i32,
-    pub family: i32,
+    pub small: u32,
+    pub sports: u32,
+    pub luxury: u32,
+    pub family: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
