@@ -42,6 +42,18 @@ impl From<CarType> for db_models::CarType {
     }
 }
 
+impl PartialEq<CarType> for CarType {
+    fn eq(&self, other: &CarType) -> bool {
+        match (self, other) {
+            (CarType::Small, CarType::Small) => true,
+            (CarType::Sports, CarType::Sports) => true,
+            (CarType::Luxury, CarType::Luxury) => true,
+            (CarType::Family, CarType::Family) => true,
+            (_, _) => false,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub enum SortOrder {

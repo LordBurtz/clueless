@@ -1,3 +1,4 @@
+use std::cmp::PartialEq;
 use crate::db_models::{CarType, Offer};
 use crate::json_models::*;
 use crate::json_models::{
@@ -33,6 +34,18 @@ const SEARCH_QUERY: &str = r#"
 "#;
 
 const DELETE_QUERY: &str = r#""DELETE FROM offers"#;
+
+impl CarType {
+    fn eqMe(&self, other: &crate::json_models::CarType) -> bool {
+        match (self, other) {
+            (CarType::Small,  crate::json_models::CarType::Small) => true,
+            (CarType::Sports, crate::json_models::CarType::Sports) => true,
+            (CarType::Luxury, crate::json_models::CarType::Luxury) => true,
+            (CarType::Family, crate::json_models::CarType::Family) => true,
+            _ => false,
+        }
+    }
+}
 
 impl DBManager {
     pub fn new(client: clickhouse::Client) -> Self {
@@ -102,49 +115,53 @@ impl DBManager {
             ? >= end_date"
             .to_string();
 
-        if request_offer.min_number_seats.is_some() {
-            query_string.push_str("AND ? <= number_seats");
-        }
-        if request_offer.car_type.is_some() {
-            query_string.push_str(" AND car_type = ?");
-        }
-        if request_offer.only_vollkasko.is_some() {
-            query_string.push_str(" AND has_vollkasko = ?");
-        }
-        if request_offer.min_free_kilometer.is_some() {
-            query_string.push_str(" AND free_kilometers >= ?");
-        }
-        if request_offer.min_price.is_some() {
-            if request_offer.max_price.is_some() {
-                query_string.push_str(" AND price BETWEEN ? AND ?");
-            } else {
-                query_string.push_str(" AND price >= ?");
-            }
-        }
+        /// For now commented out as we filter in rust, not sql
+
+        // if request_offer.min_number_seats.is_some() {
+        //     query_string.push_str("AND ? <= number_seats");
+        // }
+        // if request_offer.car_type.is_some() {
+        //     query_string.push_str(" AND car_type = ?");
+        // }
+        // if request_offer.only_vollkasko.is_some() {
+        //     query_string.push_str(" AND has_vollkasko = ?");
+        // }
+        // if request_offer.min_free_kilometer.is_some() {
+        //     query_string.push_str(" AND free_kilometers >= ?");
+        // }
+        // if request_offer.min_price.is_some() {
+        //     if request_offer.max_price.is_some() {
+        //         query_string.push_str(" AND price BETWEEN ? AND ?");
+        //     } else {
+        //         query_string.push_str(" AND price >= ?");
+        //     }
+        // }
         let mut query = self
             .client
             .query(&query_string);
 
-        if let Some(numberOfSeats) = request_offer.min_number_seats {
-            query = query.bind(numberOfSeats);
-        }
-        if let Some(carType) = request_offer.car_type {
-            query = query.bind(carType as u32);
-        }
-        if let Some(hasVollkasko) = request_offer.only_vollkasko {
-            query = query.bind(hasVollkasko);
-        }
-        if let Some(freeKilometers) = request_offer.min_free_kilometer {
-            query = query.bind(freeKilometers);
-        }
-        if let Some(minPrice) = request_offer.min_price {
-            query = query.bind(minPrice);
-            if let Some(maxPrice) = request_offer.max_price {
-                query = query.bind(maxPrice);
-            }
-        }
+        /// For now commented out, as we filter not in sql but in rust
 
-        let mut offers = query.fetch_all::<Offer>().await?;
+        // if let Some(numberOfSeats) = request_offer.min_number_seats {
+        //     query = query.bind(numberOfSeats);
+        // }
+        // if let Some(carType) = request_offer.car_type {
+        //     query = query.bind(carType as u32);
+        // }
+        // if let Some(hasVollkasko) = request_offer.only_vollkasko {
+        //     query = query.bind(hasVollkasko);
+        // }
+        // if let Some(freeKilometers) = request_offer.min_free_kilometer {
+        //     query = query.bind(freeKilometers);
+        // }
+        // if let Some(minPrice) = request_offer.min_price {
+        //     query = query.bind(minPrice);
+        //     if let Some(maxPrice) = request_offer.max_price {
+        //         query = query.bind(maxPrice);
+        //     }
+        // }
+
+        let offers = query.fetch_all::<Offer>().await?;
 
         // counts for vollkasko occurences
         let (mut true_count, mut false_count) = (0, 0);
@@ -210,9 +227,45 @@ impl DBManager {
         // Sort orders and paginate
         //
 
+        let temp_offers = offers.clone();
+
+        let mut possible_filtered_offers: Vec<&Offer> =  temp_offers.iter().filter(|a| {
+            if let Some(numberOfSeats) = request_offer.min_number_seats {
+                if a.number_seats < numberOfSeats {
+                    return false;
+                }
+            }
+            if let Some(carType) = request_offer.car_type {
+                if a.car_type.eqMe(&carType) {
+                    return false;
+                }
+            }
+            if let Some(hasVollkasko) = request_offer.only_vollkasko {
+                if a.has_vollkasko != hasVollkasko {
+                    return false;
+                }
+            }
+            if let Some(freeKilometers) = request_offer.min_free_kilometer {
+                if a.free_kilometers < freeKilometers {
+                    return false;
+                }
+            }
+            if let Some(minPrice) = request_offer.min_price {
+                if let Some(maxPrice) = request_offer.max_price {
+                    if (maxPrice <= a.price) {
+                        return false;
+                    }
+                }
+                if minPrice > a.price {
+                    return false;
+                }
+            }
+            return true;
+        }).collect::<Vec<&Offer>>();
+
         match request_offer.sort_order {
-            SortOrder::PriceAsc => offers.sort_by(|a, b| a.number_seats.cmp(&b.number_seats)),
-            SortOrder::PriceDesc => offers.sort_by(|a, b| b.number_seats.cmp(&a.number_seats)),
+            SortOrder::PriceAsc => possible_filtered_offers.sort_by(|a, b| a.number_seats.cmp(&b.number_seats)),
+            SortOrder::PriceDesc => possible_filtered_offers.sort_by(|a, b| b.number_seats.cmp(&a.number_seats)),
         }
 
         let paged_offers: Vec<ResponseOffer> = offers
