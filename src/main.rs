@@ -58,13 +58,13 @@ async fn handle_get_offers_request(
     req: Request<IncomingBody>,
     manager: &DBManager,
 ) -> Result<Response<BoxBody>> {
-    println!("GET request");
+    // println!("GET request");
     // Aggregate the body...
-    println!("test");
+    // println!("test");
 
     let query: RequestOffer = serde_urlencoded::from_str(req.uri().query().unwrap())?;
 
-    println!("{:?}", query);
+    // println!("{:?}", query);
 
     let (response, status_code) = match manager.query_for(query).await {
         Ok(res) => {
@@ -106,7 +106,7 @@ async fn api_handler(
     req: Request<IncomingBody>,
     manager: Arc<DBManager>,
 ) -> Result<Response<BoxBody>> {
-    println!("{} {}", req.method(), req.uri().path());
+    // println!("{} {}", req.method(), req.uri().path());
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/") => Ok(Response::new(full("clueless"))),
         (&Method::POST, "/api/offers") => api_post_response(req, &manager).await,
