@@ -525,6 +525,7 @@ impl DBManager {
         price_range_width: u32,
     ) -> Vec<PriceRange> {
         let mut vec_offers_price_range = offers.collect::<Vec<&Offer>>();
+        if vec_offers_price_range.is_empty() { return vec![]; }
 
         vec_offers_price_range.sort_by(|a, b| a.price.cmp(&b.price));
         let head = vec_offers_price_range.first().unwrap();
