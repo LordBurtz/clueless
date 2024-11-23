@@ -1,3 +1,4 @@
+use clickhouse::query::Query;
 use crate::json_models::*;
 use crate::json_models::{CarTypeCount, GetReponseBodyModel};
 use crate::GenericError;
@@ -79,31 +80,48 @@ impl DBManager {
         &self,
         request_offer: RequestOffer,
     ) -> Result<GetReponseBodyModel, GenericError> {
-        let mut offers = self
-            .client
-            .query(
-                " SELECT ?fields
-    FROM offers
-    WHERE
+        let mut query_parameters: Vec<impl Bind> = vec![];
+        let mut query_string: String = " SELECT ?fields
+        FROM offers
+        WHERE
         mostSpecificRegionID = ? AND
-        ? <= startDate AND
-        ? >= endDate AND
-        ? <= numberSeats AND
-        carType = ? AND
-        hasVollkasko = ? AND
-        freeKilometers >= ? AND
-        price BETWEEN ? AND ?
-        ",
-            )
-            .bind(request_offer.region_id)
-            .bind(request_offer.time_range_start)
-            .bind(request_offer.time_range_end)
-            .bind(request_offer.min_number_seats.unwrap())
-            .bind(request_offer.car_type.unwrap().as_u8())
-            .bind(request_offer.only_vollkasko.unwrap() as i32)
-            .bind(request_offer.min_free_kilometer.unwrap())
-            .bind(request_offer.min_price.unwrap())
-            .bind(request_offer.max_price.unwrap())
+            ? <= startDate AND
+            ? >= endDate".to_string();
+        
+        if let Some(numberOfSeats) = request_offer.min_number_seats {
+            query_string.push_str("AND ? <= numberSeats");
+            query_parameters.push(numberOfSeats)
+        }
+        if let Some(carType) = request_offer.car_type {
+            query_string.push_str(" AND carType = ?");
+            query_parameters.push(carType);
+        }
+        if let Some(hasVollkasko) = request_offer.only_vollkasko {
+            query_string.push_str(" AND hasVollkasko = ?");
+            query_parameters.push(hasVollkasko);
+        }
+        if let Some(freeKilometers) = request_offer.min_free_kilometer {
+            query_string.push_str(" AND freeKilometers >= ?");
+            query_parameters.push(freeKilometers);
+        }
+        if let Some(minPrice) = request_offer.min_price {
+            query_parameters.push(minPrice);
+            if let Some(maxPrice) = request_offer.max_price {
+                query_string.push_str(" AND price BETWEEN ? AND ?");
+                query_parameters.push(maxPrice);
+            } else {
+                query_string.push_str(" AND price >= ?");
+            }
+        }
+        let mut query = self
+            .client
+            .query(query_parameters.as_slice());
+
+        for param in query_parameters {
+            query = query.bind(&param);
+        }
+
+        let mut offers = query
             .fetch_all::<Offer>()
             .await?;
 
