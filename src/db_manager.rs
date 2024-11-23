@@ -207,6 +207,22 @@ impl DBManager {
 
         let offers = query.fetch_all::<Offer>().await?;
 
+        if offers.is_empty() {
+            return Ok(crate::json_models::GetReponseBodyModel{
+                offers: vec![],
+                price_ranges: vec![],
+                car_type_counts: CarTypeCount {
+                    small: 0,
+                    sports: 0,
+                    luxury: 0,
+                    family: 0,
+                },
+                seats_count: vec![],
+                free_kilometer_range: vec![],
+                vollkasko_count: VollKaskoCount { true_count: 0, false_count: 0 },
+            })
+        }
+        
         //
         // Count vollkasko and car type options
         //
