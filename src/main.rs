@@ -130,7 +130,7 @@ async fn main() -> Result<()> {
     let conn = db_manager::open_connection()?;
     let db = Arc::new(DBManager::new_lock(conn));
 
-    let addr: SocketAddr = "127.0.0.1:3000".parse().unwrap();
+    let addr: SocketAddr = "0.0.0.0:80".parse().unwrap();
 
     let listener = TcpListener::bind(&addr).await?;
     println!("Listening on http://{}", addr);
