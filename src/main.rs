@@ -3,6 +3,10 @@ mod db_manager;
 mod db_models;
 mod json_models;
 mod region_hierarchy;
+mod tree_exp;
+
+use json_models::*;
+
 use crate::db_manager::DBManager;
 use crate::region_hierarchy::populate_region_hierarchy;
 use bytes::{Buf, Bytes};
@@ -217,7 +221,7 @@ fn full<T: Into<Bytes>>(chunk: T) -> BoxBody {
         .boxed()
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<()> {
     // pretty_env_logger::init();
     let db_client = clickhouse::Client::default()
