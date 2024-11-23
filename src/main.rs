@@ -51,6 +51,8 @@ async fn api_post_response(
 
     println!("Inserting offers");
 
+    let start = std::time::Instant::now();
+
     for elem in iter {
         match elem {
             Ok(json_value) => {
@@ -139,6 +141,10 @@ async fn api_post_response(
     }
 
     insert.end().await?;
+
+    let end = start.elapsed();
+
+    println!("Inserting offers took {:?}ms", end.as_millis());
 
     let response = Response::builder()
         .status(StatusCode::OK)
