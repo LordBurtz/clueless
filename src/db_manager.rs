@@ -405,6 +405,8 @@ impl DBManager {
         request_offer: RequestOffer,
     ) -> Vec<ResponseOffer> {
         let mut local_offers = offers.into_iter().cloned().collect::<Vec<Offer>>();
+        if local_offers.is_empty() { return vec![]; }
+
         match request_offer.sort_order {
             SortOrder::PriceAsc => local_offers.sort_by(|a, b| {
                 let comp = a.price.cmp(&b.price);
@@ -437,7 +439,11 @@ impl DBManager {
         offers: impl Iterator<Item=&'a Offer>,
         min_free_kilometer_width: u32,
     ) -> Vec<FreeKilometerRange> {
+
         let mut vec_offers_free_kilometers = offers.collect::<Vec<&Offer>>();
+
+        if vec_offers_free_kilometers.is_empty() { return vec![]; }
+
         vec_offers_free_kilometers.sort_by(|a, b| a.free_kilometers.cmp(&b.free_kilometers));
         let head = vec_offers_free_kilometers.first().unwrap();
 
