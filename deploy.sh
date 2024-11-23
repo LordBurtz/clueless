@@ -1,4 +1,5 @@
 #!/bin/bash
 
 git pull
-cargo run -r
+cargo build -r
+sudo ./target/debug/clueless
