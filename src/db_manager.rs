@@ -412,34 +412,33 @@ impl DBManager {
         let mut vec_offers_price_range = offers.clone();
 
         vec_offers_price_range.sort_by(|a, b| a.price.cmp(&b.price));
-        let (head_price_range, tail_price_range) = vec_offers_price_range.split_at(1);
+        let head = vec_offers_price_range.first().unwrap();
 
         // magic number access,
-        let first_price_offer = head_price_range.first().unwrap();
 
-        let mut lower_bound_price_range = first_price_offer.price + price_range_width;
 
-        let mut price_vec_vec: Vec<Vec<&Offer>> = vec![]; // i literally do not care
-        price_vec_vec.push(vec![first_price_offer]);
+        // TODO: rename later
+        let mut lower_bound_free_km = (head.price / price_range_width) * price_range_width;
 
-        for offer in tail_price_range {
-            if offer.price < lower_bound_price_range {
-                price_vec_vec.last_mut().unwrap().push(offer);
+        // let mut lower_bound_free_km =
+        //     first_km.free_kilometers + min_free_kilometer_width;
+
+        let mut km_vec_vec: Vec<PriceRange> = vec![]; // i literally do not care
+        km_vec_vec.push(crate::json_models::PriceRange{start: lower_bound_free_km, end: lower_bound_free_km + price_range_width, count: 0});
+
+
+        for offer in vec_offers_price_range {
+            let PriceRange{start, end, count} = km_vec_vec.last_mut().unwrap();
+            if offer.price < *end {
+                *count += 1
             } else {
-                lower_bound_price_range += price_range_width;
-                price_vec_vec.push(vec![offer]);
+                // TODO: helper method
+                lower_bound_free_km = (offer.price / price_range_width) * price_range_width;
+                km_vec_vec.push(PriceRange{start: lower_bound_free_km, end:  lower_bound_free_km + price_range_width, count: 1});
             }
         }
 
-        return price_vec_vec
-            .iter()
-            .map(|a| {
-                let start = a.first().unwrap().price;
-                let end = a.last().unwrap().price;
-                let count = a.len() as u32;
-                PriceRange { start, end, count }
-            })
-            .collect();
+        return km_vec_vec;
     }
 
     pub fn toSeatNumberOffers(offers: &Vec<Offer>) -> Vec<SeatCount> {
