@@ -43,7 +43,7 @@ const SEARCH_QUERY: &str = r#"
         price BETWEEN ?9 AND ?0;
 "#;
 
-const DELETE_QUERY: &str = r#""DELETE FROM check24_db"#;
+const DELETE_QUERY: &str = r#"DELETE FROM check24_db"#;
 
 pub fn open_connection() -> Result<Connection, Error> {
     let conn = Connection::open("test-db.sqlite3")?;
