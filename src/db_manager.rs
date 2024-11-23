@@ -205,7 +205,7 @@ impl DBManager {
                 }
             }
             if let Some(carType) = request_offer.car_type {
-                if offer.car_type.eqMe(&carType) {
+                if !offer.car_type.eqMe(&carType) {
                     car_type_incl = false
                 }
             }
@@ -279,8 +279,8 @@ impl DBManager {
             },
         };
 
-        // let car_type_count =
-            // Self::get_car_type_count(&offers, &car_type_filter_excl, &request_offer);
+        let car_type_count =
+            Self::get_car_type_count(&offers, &car_type_filter_excl, &request_offer);
 
         //
         // price range slicing
@@ -325,78 +325,78 @@ impl DBManager {
         return Ok(GetReponseBodyModel {
             offers: paged_offers,
             price_ranges: price_range_bucket,
-            car_type_counts: car_type_count2,
+            car_type_counts: car_type_count,
             seats_count: seatCountVec,
             free_kilometer_range: free_kilometer_bucket,
             vollkasko_count: vollkasko_count2,
         });
     }
 
-    // fn get_car_type_count(
-    //     offers: &[Offer],
-    //     excluded_offers: &[Offer],
-    //     request_offer: &RequestOffer,
-    // ) -> CarTypeCount {
-    //     let filtered_offers_count = offers.len() as u32;
-    //     match request_offer.car_type {
-    //         None => {
-    //             let mut small = 0;
-    //             let mut sports = 0;
-    //             let mut luxury = 0;
-    //             let mut family = 0;
-    //             for offer in offers {
-    //                 match offer.car_type {
-    //                     CarType::Small => small += 1,
-    //                     CarType::Sports => sports += 1,
-    //                     CarType::Luxury => luxury += 1,
-    //                     CarType::Family => family += 1
-    //                 }
-    //             }
-    //             CarTypeCount {
-    //                 small,
-    //                 sports,
-    //                 luxury,
-    //                 family,
-    //             }
-    //         }
-    //         Some(filtered_car_type) => {
-    //             let mut small_excluded = 0;
-    //             let mut family_excluded = 0;
-    //             let mut luxury_excluded = 0;
-    //             let mut sports_excluded = 0;
-    //             for offer in excluded_offers {
-    //                 match offer.car_type {
-    //                     CarType::Small => small_excluded += 1,
-    //                     CarType::Sports => sports_excluded += 1,
-    //                     CarType::Luxury => luxury_excluded += 1,
-    //                     CarType::Family => family_excluded += 1,
-    //                 };
-    //             }
-    //             CarTypeCount {
-    //                 small: if (filtered_car_type.into() == CarType::Small) {
-    //                     filtered_offers_count
-    //                 } else {
-    //                     small_excluded
-    //                 },
-    //                 sports: if (filtered_car_type.into() == CarType::Sports) {
-    //                     filtered_offers_count
-    //                 } else {
-    //                     sports_excluded
-    //                 },
-    //                 luxury: if (filtered_car_type.into() == CarType::Luxury) {
-    //                     filtered_offers_count
-    //                 } else {
-    //                     luxury_excluded
-    //                 },
-    //                 family: if (filtered_car_type.into() == CarType::Family) {
-    //                     filtered_offers_count
-    //                 } else {
-    //                     family_excluded
-    //                 },
-    //             }
-    //         }
-    //     }
-    // }
+    fn get_car_type_count(
+        offers: &[Offer],
+        excluded_offers: &[&Offer],
+        request_offer: &RequestOffer,
+    ) -> CarTypeCount {
+        let filtered_offers_count = offers.len() as u32;
+        match request_offer.car_type {
+            None => {
+                let mut small = 0;
+                let mut sports = 0;
+                let mut luxury = 0;
+                let mut family = 0;
+                for offer in offers {
+                    match offer.car_type {
+                        CarType::Small => small += 1,
+                        CarType::Sports => sports += 1,
+                        CarType::Luxury => luxury += 1,
+                        CarType::Family => family += 1
+                    }
+                }
+                CarTypeCount {
+                    small,
+                    sports,
+                    luxury,
+                    family,
+                }
+            }
+            Some(filtered_car_type) => {
+                let mut small_excluded = 0;
+                let mut family_excluded = 0;
+                let mut luxury_excluded = 0;
+                let mut sports_excluded = 0;
+                for offer in excluded_offers {
+                    match offer.car_type {
+                        CarType::Small => small_excluded += 1,
+                        CarType::Sports => sports_excluded += 1,
+                        CarType::Luxury => luxury_excluded += 1,
+                        CarType::Family => family_excluded += 1,
+                    };
+                }
+                CarTypeCount {
+                    small: if (CarType::Small.eqMe(&filtered_car_type)) {
+                        filtered_offers_count
+                    } else {
+                        small_excluded
+                    },
+                    sports: if CarType::Sports.eqMe(&filtered_car_type) {
+                        filtered_offers_count
+                    } else {
+                        sports_excluded
+                    },
+                    luxury: if CarType::Luxury.eqMe(&filtered_car_type) {
+                        filtered_offers_count
+                    } else {
+                        luxury_excluded
+                    },
+                    family: if CarType::Family.eqMe(&filtered_car_type) {
+                        filtered_offers_count
+                    } else {
+                        family_excluded
+                    },
+                }
+            }
+        }
+    }
 
     fn sortOrdersAndPaginate(
         offers: Vec<&Offer>,
