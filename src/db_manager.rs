@@ -102,40 +102,46 @@ impl DBManager {
             ? >= end_date"
             .to_string();
 
-        if let Some(numberOfSeats) = request_offer.min_number_seats {
+        if request_offer.min_number_seats.is_some() {
             query_string.push_str("AND ? <= number_seats");
-            query_parameters.push(numberOfSeats.to_string());
         }
-        if let Some(carType) = request_offer.car_type {
+        if request_offer.car_type.is_some() {
             query_string.push_str(" AND car_type = ?");
-            query_parameters.push((carType as u8).to_string());
         }
-        if let Some(hasVollkasko) = request_offer.only_vollkasko {
+        if request_offer.only_vollkasko.is_some() {
             query_string.push_str(" AND has_vollkasko = ?");
-            query_parameters.push(hasVollkasko.to_string());
         }
-        if let Some(freeKilometers) = request_offer.min_free_kilometer {
+        if request_offer.min_free_kilometer.is_some() {
             query_string.push_str(" AND free_kilometers >= ?");
-            query_parameters.push(freeKilometers.to_string());
         }
-        if let Some(minPrice) = request_offer.min_price {
-            query_parameters.push(minPrice.to_string());
-            if let Some(maxPrice) = request_offer.max_price {
+        if request_offer.min_price.is_some() {
+            if request_offer.max_price.is_some() {
                 query_string.push_str(" AND price BETWEEN ? AND ?");
-                query_parameters.push(maxPrice.to_string());
             } else {
                 query_string.push_str(" AND price >= ?");
             }
         }
         let mut query = self
             .client
-            .query(&query_string)
-            .bind(request_offer.region_id)
-            .bind(request_offer.time_range_start)
-            .bind(request_offer.time_range_end);
+            .query(&query_string);
 
-        for param in query_parameters {
-            query = query.bind(&param);
+        if let Some(numberOfSeats) = request_offer.min_number_seats {
+            query = query.bind(numberOfSeats);
+        }
+        if let Some(carType) = request_offer.car_type {
+            query = query.bind(carType as u32);
+        }
+        if let Some(hasVollkasko) = request_offer.only_vollkasko {
+            query = query.bind(hasVollkasko);
+        }
+        if let Some(freeKilometers) = request_offer.min_free_kilometer {
+            query = query.bind(freeKilometers);
+        }
+        if let Some(minPrice) = request_offer.min_price {
+            query = query.bind(minPrice);
+            if let Some(maxPrice) = request_offer.max_price {
+                query = query.bind(maxPrice);
+            }
         }
 
         let mut offers = query.fetch_all::<Offer>().await?;
@@ -209,11 +215,6 @@ impl DBManager {
             SortOrder::PriceDesc => offers.sort_by(|a, b| b.number_seats.cmp(&a.number_seats)),
         }
 
-        //
-        // 190 |   ...       .into_iter()
-        //     |              ----------- `Iterator::Item` remains `&[Offer]` here
-        // note: required by a bound in `std::iter::Iterator::collect`
-        // --> /rustc/f6e511eec7342f59a25f7c0534f1dbea00d01b14/library/core/src/iter/traits/iterator.rs:1996:5
         let paged_offers: Vec<ResponseOffer> = offers
             .into_iter()
             //TODO: double check if pagination starts at 1
