@@ -25,7 +25,7 @@ async fn api_post_response(req: Request<IncomingBody>) -> Result<Response<BoxBod
     // Decode as JSON...
     let mut data: serde_json::Value = serde_json::from_reader(whole_body.reader())?;
 
-    let test: PostRequest = serde_json::from_value(data)?;
+    let test: PostRequestBodyModel = serde_json::from_value(data)?;
 
     // Change the JSON...
     // data["test"] = serde_json::Value::from("test_value");
@@ -41,7 +41,7 @@ async fn api_post_response(req: Request<IncomingBody>) -> Result<Response<BoxBod
 async fn handle_get_offers_request(req: Request<IncomingBody>) -> Result<Response<BoxBody>> {
     // let query_params: json_models::RequestOffer =
     //    serde_urlencoded::from_str(req.uri().query().unwrap_or(""))?;
-    let query_params: ResponseOffers = serde_json::from_str(SAMPLE_GET_RESPONSE)?;
+    let query_params: GetReponseBodyModel = serde_json::from_str(SAMPLE_GET_RESPONSE)?;
         // serde_urlencoded::from_str(SAMPLE_GET_RESPONSE)?;
 
     let res = match serde_json::to_string(&query_params) {

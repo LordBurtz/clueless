@@ -38,7 +38,7 @@ enum SortOrder {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct ResponseOffers {
+pub struct GetReponseBodyModel {
     offers: Vec<ResponseOffer>,
     price_ranges: Vec<PriceRange>,
     car_type_counts: CarTypeCount,
@@ -91,7 +91,7 @@ struct VollKaskoCount {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct PostRequest {
+pub struct PostRequestBodyModel {
     offers: Vec<Offer>,
 }
 
