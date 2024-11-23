@@ -195,7 +195,7 @@ impl DBManager {
         for offer in &offers {
             let mut seats_incl = true;
             let mut car_type_incl = true;
-            let mut has_vollkasko_incl = true;
+            let mut only_vollkasko_ignored = true;
             let mut free_kilometers_incl = true;
             let mut price_range_incl = true;
 
@@ -209,9 +209,9 @@ impl DBManager {
                     car_type_incl = false
                 }
             }
-            if let Some(hasVollkasko) = request_offer.only_vollkasko {
-                if offer.has_vollkasko != hasVollkasko {
-                    has_vollkasko_incl = false;
+            if let Some(vollkasko_required) = request_offer.only_vollkasko {
+                if vollkasko_required && !offer.has_vollkasko {
+                    only_vollkasko_ignored = false;
                 }
             }
             if let Some(minFreeKilometers) = request_offer.min_free_kilometer {
@@ -232,7 +232,7 @@ impl DBManager {
             match (
                 seats_incl,
                 car_type_incl,
-                has_vollkasko_incl,
+                only_vollkasko_ignored,
                 free_kilometers_incl,
                 price_range_incl,
             ) {
@@ -247,9 +247,7 @@ impl DBManager {
         }
 
         let filtered_offers_count = filtered_offers.len() as u32;
-        println!("filtered_offers_count: {}", filtered_offers_count);
-        println!("offer size: {:?}", offers.len());
-        println!("car_type_filter_excl: {:?}", car_type_filter_excl.len());
+
         //
         // Count vollkasko and car type options
         //
