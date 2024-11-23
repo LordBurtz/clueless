@@ -170,7 +170,16 @@ impl DBManager {
         //         query_string.push_str(" AND price >= ?");
         //     }
         // }
-        let mut query = self.client.query(&query_string);
+        let mut query = self.client.query(&query_string).bind(
+            request_offer
+                .region_id
+        ).bind(
+            request_offer
+                .time_range_start
+        ).bind(
+            request_offer
+                .time_range_end
+        );
 
         /// For now commented out, as we filter not in sql but in rust
         // if let Some(numberOfSeats) = request_offer.min_number_seats {
