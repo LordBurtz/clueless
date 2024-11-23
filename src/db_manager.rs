@@ -80,35 +80,35 @@ impl DBManager {
         &self,
         request_offer: RequestOffer,
     ) -> Result<GetReponseBodyModel, GenericError> {
-        let mut query_parameters: Vec<impl Bind> = vec![];
+        let mut query_parameters: Vec<Box<dyn Bind>> = Vec::new();
         let mut query_string: String = " SELECT ?fields
         FROM offers
         WHERE
         mostSpecificRegionID = ? AND
             ? <= startDate AND
             ? >= endDate".to_string();
-        
+
         if let Some(numberOfSeats) = request_offer.min_number_seats {
             query_string.push_str("AND ? <= numberSeats");
-            query_parameters.push(numberOfSeats)
+            query_parameters.push(Box::new(numberOfSeats).into());
         }
         if let Some(carType) = request_offer.car_type {
             query_string.push_str(" AND carType = ?");
-            query_parameters.push(carType);
+            query_parameters.push(Box::new(carType).into());
         }
         if let Some(hasVollkasko) = request_offer.only_vollkasko {
             query_string.push_str(" AND hasVollkasko = ?");
-            query_parameters.push(hasVollkasko);
+            query_parameters.push(Box::new(hasVollkasko).into());
         }
         if let Some(freeKilometers) = request_offer.min_free_kilometer {
             query_string.push_str(" AND freeKilometers >= ?");
-            query_parameters.push(freeKilometers);
+            query_parameters.push(Box::new(freeKilometers).into());
         }
         if let Some(minPrice) = request_offer.min_price {
-            query_parameters.push(minPrice);
+            query_parameters.push(Box::new(minPrice).into());
             if let Some(maxPrice) = request_offer.max_price {
                 query_string.push_str(" AND price BETWEEN ? AND ?");
-                query_parameters.push(maxPrice);
+                query_parameters.push(Box::new(maxPrice).into());
             } else {
                 query_string.push_str(" AND price >= ?");
             }
