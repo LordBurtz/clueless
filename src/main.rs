@@ -53,21 +53,19 @@ async fn api_post_response(req: Request<IncomingBody>, ref_db: Arc<Mutex<DBManag
 }
 
 async fn handle_get_offers_request(req: Request<IncomingBody>, ref_db: Arc<Mutex<DBManager>>) -> Result<Response<BoxBody>> {
+    println!("GET request");
     // Aggregate the body...
-    let whole_body = req.collect().await?.aggregate();
+    println!("test");
 
-    // parse into model
-    let request_body: RequestOffer = serde_json::from_reader(whole_body.reader())?;
-    // TODO: mock
-    let mocked_query_result: GetReponseBodyModel = serde_json::from_str(SAMPLE_GET_RESPONSE)?;
-        // serde_urlencoded::from_str(SAMPLE_GET_RESPONSE)?;
+    let query: RequestOffer = serde_urlencoded::from_str(req.uri().query().unwrap())?;
+        
+    println!("{:?}", query);
+    let manager = ref_db.lock().unwrap();
 
-    let mut manager = ref_db.lock().unwrap();
-
-    let (response, status_code) = match manager.query_for(request_body) {
+    let (response, status_code) = match manager.query_for(query) {
         Ok(res) => {
             // normally use res but now mock
-            let json = serde_json::to_string(&mocked_query_result)?;
+            let json = serde_json::to_string(&res)?;
 
             (full(json), StatusCode::OK)
         },
@@ -104,7 +102,7 @@ async fn delete_offer_request(ref_db: Arc<Mutex<DBManager>>) -> Result<Response<
 }
 
 async fn api_handler(req: Request<IncomingBody>, ref_db: Arc<Mutex<DBManager>>) -> Result<Response<BoxBody>> {
-
+    println!("{} {}", req.method(), req.uri().path());
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/") => Ok(Response::new(full("clueless"))),
         (&Method::POST, "/api/offers") => api_post_response(req, ref_db).await,

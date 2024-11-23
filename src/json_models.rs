@@ -114,7 +114,7 @@ pub struct PostRequestBodyModel {
     pub offers: Vec<Offer>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Offer {
     #[serde(rename = "ID")]
