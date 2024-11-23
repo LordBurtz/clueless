@@ -364,7 +364,7 @@ impl DBManager {
             } else {
                 // TODO: helper method
                 lower_bound_free_km = (offer.free_kilometers / min_free_kilometer_width) * min_free_kilometer_width;
-                km_vec_vec.push(FreeKilometerRange{start: lower_bound_free_km, end:  lower_bound_free_km + min_free_kilometer_width, count: 0});
+                km_vec_vec.push(FreeKilometerRange{start: lower_bound_free_km, end:  lower_bound_free_km + min_free_kilometer_width, count: 1});
             }
         }
 
