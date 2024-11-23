@@ -42,7 +42,12 @@ def parse_log_file(log_file_path, output_dir):
                             temp = []
                             for key in wanted:
                                 if wanted[key] != actual[key]:
-                                    temp.append({"actual_"+key: actual[key], "wanted_"+key: wanted[key]})
+                                    diff_dic = {"actual_"+key: actual[key], "wanted_"+key: wanted[key]}
+                                    if key == "Offers":
+                                        diff_dic["actual_amount"] = len(actual[key])
+                                        diff_dic["wanted_amount"] = len(wanted[key])
+                                    temp.append(diff_dic)
+
                             diff['diff'] += temp
                             failed_cases.append(diff)
 
