@@ -325,7 +325,7 @@ impl DBManager {
         return Ok(GetReponseBodyModel {
             offers: paged_offers,
             price_ranges: price_range_bucket,
-            car_type_counts: car_type_count,
+            car_type_counts: car_type_count2,
             seats_count: seatCountVec,
             free_kilometer_range: free_kilometer_bucket,
             vollkasko_count: vollkasko_count2,
