@@ -128,6 +128,47 @@ impl DBManager {
 
         }
 
+        //
+        // price range slicing
+        //
+
+        // TODO: only once
+        // setup a list of offers
+        let mut vec_offers_price_range = results.by_ref()
+            .map(|a| a.ok())
+            .filter_map(|a| a)
+            .collect::<Vec<Offer>>()
+            ;
+
+        vec_offers_price_range
+            .sort_by(|a, b| a.price.cmp(&b.price));
+        let (head_price_range, tail_price_range) = vec_offers_price_range.split_at(0);
+
+        // magic number access,
+        let first_price_offer = head_price_range.first().unwrap();
+
+        let mut lower_bound_price_range = first_price_offer.price + request_offer.price_range_width;
+
+        let mut price_vec_vec: Vec<Vec<&Offer>> = vec![]; // i literally do not care
+        price_vec_vec.push(vec![first_price_offer]);
+
+        for offer in tail_price_range {
+            if offer.price < lower_bound_price_range {
+                price_vec_vec.last_mut().unwrap()
+                    .push(offer);
+            } else {
+                lower_bound_price_range += request_offer.price_range_width;
+                price_vec_vec.push(vec![offer]);
+            }
+        }
+
+        let price_range_bucket = price_vec_vec.iter().map(|a| {
+            let start = a.first().unwrap().price;
+            let end = a.last().unwrap().price;
+            let count = a.len() as i32;
+            PriceRange{start, end, count}
+        }).collect();
+
 
         //
         // number seats slicing
@@ -196,7 +237,7 @@ impl DBManager {
 
         return Ok(GetReponseBodyModel{
             offers: vec![],
-            price_ranges: vec![],
+            price_ranges: price_range_bucket,
             car_type_counts: CarTypeCount {
                 small, sports, luxury, family
             },
