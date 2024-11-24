@@ -31,7 +31,7 @@ impl RegionTree {
         }
     }
 
-    pub fn get_available_offers(&self, region_id: u32) -> Vec<u32> {
+    pub fn get_available_offers(&self, region_id: u32) -> impl Iterator<Item=u32> {
         let mut offers = Vec::new();
         self.get_available_offers_recursive(region_id, &mut offers);
         offers
