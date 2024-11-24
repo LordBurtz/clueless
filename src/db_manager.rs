@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::db_models::{CarType, Offer};
 use crate::json_models::{
     CarTypeCount, FreeKilometerRange, GetReponseBodyModel, PriceRange, RequestOffer, ResponseOffer,
@@ -6,7 +7,7 @@ use crate::json_models::{
 use crate::number_of_days::NumberOfDaysIndex;
 use crate::region_hierarchy::{RegionTree, ROOT_REGION};
 use crate::GenericError;
-use fxhash::FxHashMap;
+use fxhash::{FxBuildHasher, FxHashMap};
 use gxhash::HashMapExt;
 use itertools::Itertools;
 use tokio::sync::RwLock;
@@ -143,72 +144,26 @@ impl DBManager {
             ) {
                 (true, true, true, true, true) => {
                     filtered_offers.push(offer);
-                    if offer.has_vollkasko {
-                        vollkasko_count.true_count += 1;
-                    } else {
-                        vollkasko_count.false_count += 1;
-                    }
-                    match offer.car_type {
-                        CarType::Small => car_type_count.small += 1,
-                        CarType::Sports => car_type_count.sports += 1,
-                        CarType::Luxury => car_type_count.luxury += 1,
-                        CarType::Family => car_type_count.family += 1,
-                    }
-                    let lower_bound = (offer.free_kilometers
-                        / request_offer.min_free_kilometer_width)
-                        * request_offer.min_free_kilometer_width;
-                    free_kilometers_interval_mapping
-                        .entry(lower_bound)
-                        .and_modify(|count| *count += 1)
-                        .or_insert(1);
-                    let lower_bound = (offer.price / request_offer.price_range_width)
-                        * request_offer.price_range_width;
-                    price_range_interval_mapping
-                        .entry(lower_bound)
-                        .and_modify(|count| *count += 1)
-                        .or_insert(1);
-                    seats_count_map
-                        .entry(offer.number_seats)
-                        .and_modify(|count| *count += 1)
-                        .or_insert(1);
+                    Self::handle_vollkasko_count(&mut vollkasko_count, offer);
+                    Self::handle_car_type_count(&mut car_type_count, offer);
+                    Self::handle_free_kilometers_range(&request_offer, &mut free_kilometers_interval_mapping, offer);
+                    Self::handle_price_range(&request_offer, &mut price_range_interval_mapping, offer);
+                    Self::handle_seats_count(&mut seats_count_map, offer);
                 }
                 (true, true, true, true, false) => {
-                    let lower_bound = (offer.price / request_offer.price_range_width)
-                        * request_offer.price_range_width;
-                    price_range_interval_mapping
-                        .entry(lower_bound)
-                        .and_modify(|count| *count += 1)
-                        .or_insert(1);
+                    Self::handle_price_range(&request_offer, &mut price_range_interval_mapping, offer);
                 }
                 (true, true, true, false, true) => {
-                    let lower_bound = (offer.free_kilometers
-                        / request_offer.min_free_kilometer_width)
-                        * request_offer.min_free_kilometer_width;
-                    free_kilometers_interval_mapping
-                        .entry(lower_bound)
-                        .and_modify(|count| *count += 1)
-                        .or_insert(1);
+                    Self::handle_free_kilometers_range(&request_offer, &mut free_kilometers_interval_mapping, offer);
                 }
                 (true, true, false, true, true) => {
-                    if offer.has_vollkasko {
-                        vollkasko_count.true_count += 1;
-                    } else {
-                        vollkasko_count.false_count += 1;
-                    }
+                    Self::handle_vollkasko_count(&mut vollkasko_count, offer);
                 }
                 (true, false, true, true, true) => {
-                    match offer.car_type {
-                        CarType::Small => car_type_count.small += 1,
-                        CarType::Sports => car_type_count.sports += 1,
-                        CarType::Luxury => car_type_count.luxury += 1,
-                        CarType::Family => car_type_count.family += 1,
-                    }
+                    Self::handle_car_type_count(&mut car_type_count, offer);
                 }
                 (false, true, true, true, true) => {
-                    seats_count_map
-                        .entry(offer.number_seats)
-                        .and_modify(|count| *count += 1)
-                        .or_insert(1);
+                    Self::handle_seats_count(&mut seats_count_map, offer);
                 }
                 _ => {}
             }
@@ -280,6 +235,54 @@ impl DBManager {
             free_kilometer_range: kilometer_ranges,
             vollkasko_count,
         })
+    }
+
+    #[inline(always)]
+    fn handle_seats_count(seats_count_map: &mut HashMap<u32, u32, FxBuildHasher>, offer: &Offer) {
+        seats_count_map
+            .entry(offer.number_seats)
+            .and_modify(|count| *count += 1)
+            .or_insert(1);
+    }
+
+    #[inline(always)]
+    fn handle_price_range(request_offer: &RequestOffer, price_range_interval_mapping: &mut HashMap<u32, u32, FxBuildHasher>, offer: &Offer) {
+        let lower_bound = (offer.price / request_offer.price_range_width)
+            * request_offer.price_range_width;
+        price_range_interval_mapping
+            .entry(lower_bound)
+            .and_modify(|count| *count += 1)
+            .or_insert(1);
+    }
+
+    #[inline(always)]
+    fn handle_free_kilometers_range(request_offer: &RequestOffer, free_kilometers_interval_mapping: &mut HashMap<u32, u32, FxBuildHasher>, offer: &Offer) {
+        let lower_bound = (offer.free_kilometers
+            / request_offer.min_free_kilometer_width)
+            * request_offer.min_free_kilometer_width;
+        free_kilometers_interval_mapping
+            .entry(lower_bound)
+            .and_modify(|count| *count += 1)
+            .or_insert(1);
+    }
+
+    #[inline(always)]
+    fn handle_car_type_count(car_type_count: &mut CarTypeCount, offer: &Offer) {
+        match offer.car_type {
+            CarType::Small => car_type_count.small += 1,
+            CarType::Sports => car_type_count.sports += 1,
+            CarType::Luxury => car_type_count.luxury += 1,
+            CarType::Family => car_type_count.family += 1,
+        }
+    }
+
+    #[inline(always)]
+    fn handle_vollkasko_count(vollkasko_count: &mut VollKaskoCount, offer: &Offer) {
+        if offer.has_vollkasko {
+            vollkasko_count.true_count += 1;
+        } else {
+            vollkasko_count.false_count += 1;
+        }
     }
 
     fn get_car_type_count(
