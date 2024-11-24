@@ -1,14 +1,15 @@
+use fxhash::FxHashMap;
 use gxhash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use crate::db_models::Offer;
 
 pub struct NumberOfDaysIndex {
-    map: HashMap<u32, Vec<u32>>,
+    map: FxHashMap<u32, Vec<u32>>,
 }
 
 impl NumberOfDaysIndex {
     pub fn new() -> Self {
         Self {
-            map: HashMap::new(),
+            map: FxHashMap::new(),
         }
     }
 

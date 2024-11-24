@@ -6,7 +6,8 @@ use crate::json_models::{
 use crate::number_of_days::NumberOfDaysIndex;
 use crate::region_hierarchy::{RegionTree, ROOT_REGION};
 use crate::GenericError;
-use gxhash::{HashMap, HashMapExt};
+use fxhash::FxHashMap;
+use gxhash::{HashMapExt};
 use tokio::sync::RwLock;
 
 pub struct DBManager {
@@ -290,7 +291,7 @@ impl DBManager {
         offers: impl Iterator<Item = &'a Offer>,
         free_kilometer_width: u32,
     ) -> Vec<FreeKilometerRange> {
-        let mut interval_mapping = HashMap::new();
+        let mut interval_mapping = FxHashMap::new();
 
         for offer in offers {
             let lower_bound = (offer.price / free_kilometer_width) * free_kilometer_width;
@@ -353,7 +354,7 @@ impl DBManager {
         offers: impl Iterator<Item = &'a Offer>,
         price_range_width: u32,
     ) -> Vec<PriceRange> {
-        let mut interval_mapping = HashMap::new();
+        let mut interval_mapping = FxHashMap::new();
 
         for offer in offers {
             let lower_bound = (offer.price / price_range_width) * price_range_width;
@@ -374,8 +375,7 @@ impl DBManager {
     }
 
     pub fn to_seat_number_offers<'a>(offers: impl Iterator<Item = &'a Offer>) -> Vec<SeatCount> {
-        // todo: exchange with better suited data structure
-        let mut count_map = HashMap::new();
+        let mut count_map = FxHashMap::new();
 
         for offer in offers {
             count_map
