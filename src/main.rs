@@ -48,7 +48,10 @@ async fn api_post_response(
 
     let mut insert = manager.client.insert("offers")?;
 
-    println!("Inserting offers");
+    if cfg!(debug_assertions) {
+        println!("Inserting offers");
+    }
+
 
     let start = std::time::Instant::now();
 
@@ -143,7 +146,9 @@ async fn api_post_response(
 
     let end = start.elapsed();
 
-    println!("Inserting offers took {:?}ms", end.as_millis());
+    if cfg!(debug_assertions) {
+        println!("Inserting offers took {:?}ms", end.as_millis());
+    }
 
     let response = Response::builder()
         .status(StatusCode::OK)
