@@ -3,7 +3,7 @@ use fxhash::{FxHashMap, FxHashSet};
 use gxhash::{HashMapExt, HashSetExt};
 
 pub struct NumberOfDaysIndex {
-    map: FxHashMap<u32, Vec<u32>>,
+    map: FxHashMap<u32, FxHashSet<u32>>,
 }
 
 impl NumberOfDaysIndex {
@@ -13,18 +13,17 @@ impl NumberOfDaysIndex {
         }
     }
 
-    pub fn filter_offers(&self, days: u32, offers: impl Iterator<Item=u32>) -> impl Iterator<Item=u32> {
-        let set = if let Some(set) = self.map.get(&days) {
-            FxHashSet::from_iter(set.iter().copied())
-        } else {
-            FxHashSet::new()
+    pub fn filter_offers<'a>(&'a self, days: u32, offers: impl Iterator<Item=u32> + 'a) -> Box<dyn Iterator<Item=u32> + 'a> {
+        let set = match self.map.get(&days) {
+            Some(set) => set,
+            None => return Box::new(std::iter::empty()),
         };
-        offers.filter(move |offer| set.contains(offer))
+        Box::new(offers.filter(move |idx| set.contains(idx)))
     }
 
     pub fn index_offer(&mut self, offer: &Offer) {
         let days = ((offer.end_date - offer.start_date) / (1000 * 60 * 60 * 24)) as u32;
-        self.map.entry(days).or_default().push(offer.idx);
+        self.map.entry(days).or_default().insert(offer.idx);
     }
 
     pub fn clear(&mut self) {
