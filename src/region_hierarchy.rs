@@ -34,7 +34,7 @@ impl RegionTree {
     pub fn get_available_offers(&self, region_id: u32) -> impl Iterator<Item=u32> {
         let mut offers = Vec::new();
         self.get_available_offers_recursive(region_id, &mut offers);
-        offers
+        offers.into_iter()
     }
 
     fn get_available_offers_recursive(&self, region_id: u32, offers: &mut Vec<u32>) {
@@ -64,7 +64,7 @@ mod test {
     fn it_should_work() {
         let root = super::ROOT_REGION.clone();
         let mut tree = super::RegionTree::populate_with_regions(&root);
-        assert_eq!(tree.get_available_offers(0), Vec::<u32>::new());
+        assert_eq!(tree.get_available_offers(0).collect::<Vec<_>>(), Vec::<u32>::new());
 
         tree.insert_offer(0, 1);
         tree.insert_offer(1, 2);
@@ -72,12 +72,12 @@ mod test {
         tree.insert_offer(3, 4);
         tree.insert_offer(4, 5);
 
-        assert_eq!(tree.get_available_offers(0), vec![1, 2, 3, 4, 5]);
-        assert_eq!(tree.get_available_offers(1), vec![2]);
-        assert_eq!(tree.get_available_offers(2), vec![3]);
-        assert_eq!(tree.get_available_offers(3), vec![4]);
-        assert_eq!(tree.get_available_offers(4), vec![5]);
-        assert_eq!(tree.get_available_offers(5), Vec::<u32>::new());
+        assert_eq!(tree.get_available_offers(0).collect::<Vec<_>>(), vec![1, 2, 3, 4, 5]);
+        assert_eq!(tree.get_available_offers(1).collect::<Vec<_>>(), vec![2]);
+        assert_eq!(tree.get_available_offers(2).collect::<Vec<_>>(), vec![3]);
+        assert_eq!(tree.get_available_offers(3).collect::<Vec<_>>(), vec![4]);
+        assert_eq!(tree.get_available_offers(4).collect::<Vec<_>>(), vec![5]);
+        assert_eq!(tree.get_available_offers(5).collect::<Vec<_>>(), Vec::<u32>::new());
     }
 }
 
