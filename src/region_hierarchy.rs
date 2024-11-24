@@ -4,7 +4,6 @@ use crate::GenericError;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde_json::json;
-use std::collections::{HashMap};
 
 #[derive(Default)]
 struct RegionTreeElement {
@@ -17,8 +16,8 @@ struct RegionTree {
 }
 
 impl RegionTree {
-  pub fn insert_offer(offer_idx: u32, region_id: u32) {
-    regions.insert();
+  pub fn insert_offer(&self, offer_idx: u32, region_id: u32) {
+    // self.regions.insert();
   }
 }
 

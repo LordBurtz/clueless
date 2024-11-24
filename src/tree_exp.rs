@@ -1,6 +1,4 @@
-use std::collections::{HashMap, BTreeMap, VecDeque};
-
-use slotmap::{DenseSlotMap, SecondaryMap, SlotMap};
+use std::collections::{HashMap};
 
 #[derive(Clone)]
 pub struct DenseStore<'a> {
@@ -14,18 +12,6 @@ impl DenseStore<'_> {
 
     pub fn insert(&mut self, offer: Offer) {
         self.all.push(offer);
-    }
-}
-
-impl DenseStore<'_> {
-    fn new() -> Self {
-        DenseStore {
-            map: Default::default(),
-        }
-    }
-
-    fn insert(&mut self, key: usize, value: usize) {
-
     }
 }
 
@@ -47,7 +33,8 @@ impl TreeNode<'_> {
             .map(|node| node.get_children_values())
             .collect::<Vec<&Offer>>();
 
-        result.append(&self.value)
+        // result.append(self.value.as_mut());
+        vec![]
     }
 }
 

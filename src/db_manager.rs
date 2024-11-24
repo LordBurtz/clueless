@@ -3,7 +3,7 @@ use crate::json_models::{
     CarTypeCount, FreeKilometerRange, GetReponseBodyModel, PriceRange,
     RequestOffer, ResponseOffer, SeatCount, SortOrder, VollKaskoCount,
 };
-use crate::tree_exp::DenseStore;
+// use crate::tree_exp::DenseStore;
 use crate::GenericError;
 
 #[derive(Clone)]
@@ -134,12 +134,12 @@ impl DBManager {
             .bind(request_offer.number_days * 24 * 60 * 60 * 1000);
 
 
-        let second_store = DenseStore::new();
-
-        let second_offers = second_store.all.iter().filter(|a| {
-            request_offer.time_range_start <= a.start_date && request_offer.time_range_end >= a.end_date &&
-                (a.end_date - a.start_date) == (request_offer.number_days * 24 * 60 * 60 * 1000) as u64
-        });
+        // let second_store = DenseStore::new();
+        //
+        // let second_offers = second_store.all.iter().filter(|a| {
+        //     request_offer.time_range_start <= a.start_date && request_offer.time_range_end >= a.end_date &&
+        //         (a.end_date - a.start_date) == (request_offer.number_days * 24 * 60 * 60 * 1000) as u64
+        // });
 
         //
         //Results of db query
@@ -525,7 +525,7 @@ impl DBManager {
         });
 
         for offer in vec_offers_price_range {
-            let PriceRange { _, end, count } = km_vec_vec.last_mut().unwrap();
+            let PriceRange { start: _, end, count } = km_vec_vec.last_mut().unwrap();
             if offer.price < *end {
                 *count += 1
             } else {
