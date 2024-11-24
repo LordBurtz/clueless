@@ -130,9 +130,6 @@ async fn api_post_response(
                     free_kilometers,
                 };
 
-                // Write each offer to the database
-                // insert.write(&offer).await?;
-
                 dense_store.all.push(offer);
                 region_tree.insert_offer(most_specific_region_id as u8, idx);
                 number_of_days_index.index_offer(&dense_store.all[idx as usize]);
@@ -147,14 +144,6 @@ async fn api_post_response(
             }
         }
     }
-
-    // insert.end().await?;
-
-    // let end = start.elapsed();
-
-    // if cfg!(debug_assertions) {
-    //     println!("Inserting offers took {:?}ms", end.as_millis());
-    // }
 
     let response = Response::builder()
         .status(StatusCode::OK)

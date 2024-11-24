@@ -80,7 +80,9 @@ impl DBManager {
             });
         }
 
-        let mut filtered_offers = vec![];
+        let (min_size, max_size) = offers.size_hint();
+        println!("min_size: {:?}, max_size: {:?}", min_size, max_size);
+        let mut filtered_offers = Vec::with_capacity(max_size.unwrap_or(min_size));
 
         let mut vollkasko_count = VollKaskoCount {
             true_count: 0,
