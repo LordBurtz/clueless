@@ -46,7 +46,7 @@ impl DBManager {
         let region_tree = self.region_tree_lock.read().await;
         let number_of_days_index = self.number_of_days_index_lock.read().await;
 
-        let offers = number_of_days_index
+        let mut offers = number_of_days_index
             .filter_offers(
                 request_offer.number_days,
                 region_tree.get_available_offers(request_offer.region_id),
@@ -55,10 +55,9 @@ impl DBManager {
             .filter(|a| {
                 request_offer.time_range_start <= a.start_date
                     && request_offer.time_range_end >= a.end_date
-            })
-            .collect::<Vec<_>>();
+            }).peekable();
 
-        if offers.is_empty() {
+        if offers.peek().is_some() {
             return Ok(GetReponseBodyModel {
                 offers: vec![],
                 price_ranges: vec![],
@@ -84,7 +83,7 @@ impl DBManager {
         let mut free_kilometers_filter_excl = vec![];
         let mut price_range_filter_excl = vec![];
 
-        for offer in offers.iter().copied() {
+        for offer in offers {
             let mut seats_incl = true;
             let mut car_type_incl = true;
             let mut only_vollkasko_ignored = true;
