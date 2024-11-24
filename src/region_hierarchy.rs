@@ -23,7 +23,10 @@ impl RegionTree {
 
     fn populate_with_regions_recursive(&mut self, region: &Region) {
         for subregion in &region.subregions {
-            self.regions[region.id as usize].sub_regions.get_or_insert_with(|| Vec::new()).push(subregion.id);
+            self.regions[region.id as usize]
+                .sub_regions
+                .get_or_insert_with(|| Vec::new())
+                .push(subregion.id);
             self.populate_with_regions_recursive(subregion);
         }
     }
@@ -36,7 +39,12 @@ impl RegionTree {
 
     fn get_available_offers_recursive(&self, region_id: u32, offers: &mut Vec<u32>) {
         offers.extend(&self.regions[region_id as usize].offers);
-        for sub_region_id in self.regions[region_id as usize].sub_regions.iter().flatten().copied() {
+        for sub_region_id in self.regions[region_id as usize]
+            .sub_regions
+            .iter()
+            .flatten()
+            .copied()
+        {
             self.get_available_offers_recursive(sub_region_id, offers);
         }
     }
@@ -44,29 +52,33 @@ impl RegionTree {
     pub fn insert_offer(&mut self, region_id: u32, offer_idx: u32) {
         self.regions[region_id as usize].offers.push(offer_idx);
     }
+
+    pub fn insert_offers(&mut self, region_id: u32, offer_idxs: impl IntoIterator<Item = u32>) {
+        self.regions[region_id as usize].offers.extend(offer_idxs);
+    }
 }
 
 #[cfg(test)]
 mod test {
-  #[test]
-  fn it_should_work() {
-    let root = super::ROOT_REGION.clone();
-    let mut tree = super::RegionTree::populate_with_regions(&root);
-    assert_eq!(tree.get_available_offers(0), Vec::<u32>::new());
+    #[test]
+    fn it_should_work() {
+        let root = super::ROOT_REGION.clone();
+        let mut tree = super::RegionTree::populate_with_regions(&root);
+        assert_eq!(tree.get_available_offers(0), Vec::<u32>::new());
 
-    tree.insert_offer(0, 1);
-    tree.insert_offer(1, 2);
-    tree.insert_offer(2, 3);
-    tree.insert_offer(3, 4);
-    tree.insert_offer(4, 5);
+        tree.insert_offer(0, 1);
+        tree.insert_offer(1, 2);
+        tree.insert_offer(2, 3);
+        tree.insert_offer(3, 4);
+        tree.insert_offer(4, 5);
 
-    assert_eq!(tree.get_available_offers(0), vec![1, 2, 3, 4, 5]);
-    assert_eq!(tree.get_available_offers(1), vec![2]);
-    assert_eq!(tree.get_available_offers(2), vec![3]);
-    assert_eq!(tree.get_available_offers(3), vec![4]);
-    assert_eq!(tree.get_available_offers(4), vec![5]);
-    assert_eq!(tree.get_available_offers(5), Vec::<u32>::new());
-  }
+        assert_eq!(tree.get_available_offers(0), vec![1, 2, 3, 4, 5]);
+        assert_eq!(tree.get_available_offers(1), vec![2]);
+        assert_eq!(tree.get_available_offers(2), vec![3]);
+        assert_eq!(tree.get_available_offers(3), vec![4]);
+        assert_eq!(tree.get_available_offers(4), vec![5]);
+        assert_eq!(tree.get_available_offers(5), Vec::<u32>::new());
+    }
 }
 
 #[derive(Deserialize, Clone)]
