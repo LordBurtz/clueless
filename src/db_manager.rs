@@ -172,7 +172,7 @@ impl DBManager {
         // Apply all optional filters, then paginate and return
         //
 
-        let paged_offers = Self::sort_orders_and_paginate(filtered_offers, request_offer);
+        let paged_offers = Self::sort_orders_and_paginate(&mut filtered_offers, request_offer);
 
         Ok(GetReponseBodyModel {
             offers: paged_offers,
