@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use crate::db_models::{CarType, Offer};
 use crate::json_models::{
     CarTypeCount, FreeKilometerRange, GetReponseBodyModel, PriceRange, RequestOffer, ResponseOffer,
@@ -10,6 +9,7 @@ use crate::GenericError;
 use fxhash::{FxBuildHasher, FxHashMap};
 use gxhash::HashMapExt;
 use itertools::Itertools;
+use std::collections::HashMap;
 use tokio::sync::RwLock;
 
 pub struct DBManager {
@@ -47,11 +47,10 @@ impl DBManager {
         let region_tree = self.region_tree_lock.read().await;
         let number_of_days_index = self.number_of_days_index_lock.read().await;
 
-        let mut offers =
-            number_of_days_index
+        let mut offers = number_of_days_index
             .filter_offers(
                 request_offer.number_days,
-                region_tree.get_available_offers(request_offer.region_id)
+                region_tree.get_available_offers(request_offer.region_id),
             )
             .map(|offer_idx| &dense_store.all[offer_idx as usize])
             .filter(|a| {
@@ -59,7 +58,8 @@ impl DBManager {
                 //     &&
                 request_offer.time_range_start <= a.start_date
                     && request_offer.time_range_end >= a.end_date
-            }).peekable();
+            })
+            .peekable();
 
         if offers.peek().is_none() {
             return Ok(GetReponseBodyModel {
@@ -146,15 +146,31 @@ impl DBManager {
                     filtered_offers.push(offer);
                     Self::handle_vollkasko_count(&mut vollkasko_count, offer);
                     Self::handle_car_type_count(&mut car_type_count, offer);
-                    Self::handle_free_kilometers_range(&request_offer, &mut free_kilometers_interval_mapping, offer);
-                    Self::handle_price_range(&request_offer, &mut price_range_interval_mapping, offer);
+                    Self::handle_free_kilometers_range(
+                        &request_offer,
+                        &mut free_kilometers_interval_mapping,
+                        offer,
+                    );
+                    Self::handle_price_range(
+                        &request_offer,
+                        &mut price_range_interval_mapping,
+                        offer,
+                    );
                     Self::handle_seats_count(&mut seats_count_map, offer);
                 }
                 (true, true, true, true, false) => {
-                    Self::handle_price_range(&request_offer, &mut price_range_interval_mapping, offer);
+                    Self::handle_price_range(
+                        &request_offer,
+                        &mut price_range_interval_mapping,
+                        offer,
+                    );
                 }
                 (true, true, true, false, true) => {
-                    Self::handle_free_kilometers_range(&request_offer, &mut free_kilometers_interval_mapping, offer);
+                    Self::handle_free_kilometers_range(
+                        &request_offer,
+                        &mut free_kilometers_interval_mapping,
+                        offer,
+                    );
                 }
                 (true, true, false, true, true) => {
                     Self::handle_vollkasko_count(&mut vollkasko_count, offer);
@@ -168,31 +184,6 @@ impl DBManager {
                 _ => {}
             }
         }
-
-        // let price_range_bucket = Self::to_price_ranges_offers(
-        //     filtered_offers
-        //         .iter()
-        //         .copied()
-        //         .chain(price_range_filter_excl),
-        //     request_offer.price_range_width,
-        // );
-
-        // let car_type_count2 =
-        //     Self::to_car_type_count(filtered_offers.iter().copied().chain(car_type_filter_excl));
-
-        // let list_for_it = filtered_offers
-        //     .iter()
-        //     .copied()
-        //     .chain(free_kilometers_filter_excl);
-        // let free_kilometer_bucket =
-        //     Self::to_free_kilometers_offers(list_for_it, request_offer.min_free_kilometer_width);
-
-        //
-        // calculate seat count
-        //
-
-        // let seat_count_vec =
-        //     Self::to_seat_number_offers(filtered_offers.iter().copied().chain(seats_filter_excl));
 
         let mut price_ranges = Vec::with_capacity(price_range_interval_mapping.len());
 
@@ -223,7 +214,7 @@ impl DBManager {
 
         Ok(GetReponseBodyModel {
             offers: paged_offers,
-            price_ranges: price_ranges,
+            price_ranges,
             car_type_counts: car_type_count,
             seats_count: seats_count_map
                 .into_iter()
@@ -246,9 +237,13 @@ impl DBManager {
     }
 
     #[inline(always)]
-    fn handle_price_range(request_offer: &RequestOffer, price_range_interval_mapping: &mut HashMap<u32, u32, FxBuildHasher>, offer: &Offer) {
-        let lower_bound = (offer.price / request_offer.price_range_width)
-            * request_offer.price_range_width;
+    fn handle_price_range(
+        request_offer: &RequestOffer,
+        price_range_interval_mapping: &mut HashMap<u32, u32, FxBuildHasher>,
+        offer: &Offer,
+    ) {
+        let lower_bound =
+            (offer.price / request_offer.price_range_width) * request_offer.price_range_width;
         price_range_interval_mapping
             .entry(lower_bound)
             .and_modify(|count| *count += 1)
@@ -256,9 +251,12 @@ impl DBManager {
     }
 
     #[inline(always)]
-    fn handle_free_kilometers_range(request_offer: &RequestOffer, free_kilometers_interval_mapping: &mut HashMap<u32, u32, FxBuildHasher>, offer: &Offer) {
-        let lower_bound = (offer.free_kilometers
-            / request_offer.min_free_kilometer_width)
+    fn handle_free_kilometers_range(
+        request_offer: &RequestOffer,
+        free_kilometers_interval_mapping: &mut HashMap<u32, u32, FxBuildHasher>,
+        offer: &Offer,
+    ) {
+        let lower_bound = (offer.free_kilometers / request_offer.min_free_kilometer_width)
             * request_offer.min_free_kilometer_width;
         free_kilometers_interval_mapping
             .entry(lower_bound)
