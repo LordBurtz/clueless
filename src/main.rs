@@ -8,7 +8,7 @@ mod region_hierarchy;
 use json_models::*;
 
 use crate::db_manager::DBManager;
-use crate::region_hierarchy::populate_region_hierarchy;
+use crate::region_hierarchy::{RegionTree, ROOT_REGION};
 use bytes::{Bytes};
 use futures::{StreamExt, TryStreamExt};
 use http_body_util::{BodyExt, Full};
@@ -236,7 +236,8 @@ async fn main() -> Result<()> {
 
     let db_manager = Arc::new(DBManager::new(db_client));
     db_manager.init().await?;
-    populate_region_hierarchy(&db_manager).await?;
+    let region_tree = RegionTree::populate_with_regions(&ROOT_REGION);
+    println!("{:?}", region_tree);
 
     let addr: SocketAddr = "0.0.0.0:80".parse().unwrap();
 

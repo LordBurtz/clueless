@@ -1,60 +1,81 @@
-use crate::db_manager::DBManager;
-use crate::db_models::RegionHierarchy;
-use crate::GenericError;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde_json::json;
 
-#[derive(Default)]
+#[derive(Default, Clone, Debug)]
 struct RegionTreeElement {
-  offers: Vec<u32>,
-  subRegions: Vec<u32>,
+    offers: Vec<u32>,
+    sub_regions: Option<Vec<u32>>,
 }
 
-struct RegionTree {
-  regions: Vec<RegionTreeElement>,
+#[derive(Default, Debug)]
+pub struct RegionTree {
+    regions: Vec<RegionTreeElement>,
 }
 
 impl RegionTree {
-  pub fn insert_offer(&self, offer_idx: u32, region_id: u32) {
-    // self.regions.insert();
+    pub fn populate_with_regions(root: &Region) -> RegionTree {
+        let mut tree = RegionTree::default();
+        tree.regions = vec![RegionTreeElement::default(); 125];
+        tree.populate_with_regions_recursive(root);
+        tree
+    }
+
+    fn populate_with_regions_recursive(&mut self, region: &Region) {
+        for subregion in &region.subregions {
+            self.regions[region.id as usize].sub_regions.get_or_insert_with(|| Vec::new()).push(subregion.id);
+            self.populate_with_regions_recursive(subregion);
+        }
+    }
+
+    pub fn get_available_offers(&self, region_id: u32) -> Vec<u32> {
+        let mut offers = Vec::new();
+        self.get_available_offers_recursive(region_id, &mut offers);
+        offers
+    }
+
+    fn get_available_offers_recursive(&self, region_id: u32, offers: &mut Vec<u32>) {
+        offers.extend(&self.regions[region_id as usize].offers);
+        for sub_region_id in self.regions[region_id as usize].sub_regions.iter().flatten().copied() {
+            self.get_available_offers_recursive(sub_region_id, offers);
+        }
+    }
+
+    pub fn insert_offer(&mut self, region_id: u32, offer_idx: u32) {
+        self.regions[region_id as usize].offers.push(offer_idx);
+    }
+}
+
+#[cfg(test)]
+mod test {
+  #[test]
+  fn it_should_work() {
+    let root = super::ROOT_REGION.clone();
+    let mut tree = super::RegionTree::populate_with_regions(&root);
+    assert_eq!(tree.get_available_offers(0), Vec::<u32>::new());
+
+    tree.insert_offer(0, 1);
+    tree.insert_offer(1, 2);
+    tree.insert_offer(2, 3);
+    tree.insert_offer(3, 4);
+    tree.insert_offer(4, 5);
+
+    assert_eq!(tree.get_available_offers(0), vec![1, 2, 3, 4, 5]);
+    assert_eq!(tree.get_available_offers(1), vec![2]);
+    assert_eq!(tree.get_available_offers(2), vec![3]);
+    assert_eq!(tree.get_available_offers(3), vec![4]);
+    assert_eq!(tree.get_available_offers(4), vec![5]);
+    assert_eq!(tree.get_available_offers(5), Vec::<u32>::new());
   }
 }
 
 #[derive(Deserialize, Clone)]
-struct Region {
+pub struct Region {
     id: u32,
     subregions: Vec<Region>,
 }
 
-
-pub async fn populate_region_hierarchy(manager: &DBManager) -> Result<(), GenericError> {
-    manager.delete_region_hierarchy().await?;
-    let path = vec![&*ROOT_REGION];
-    let mut region_hierarchies = Vec::new();
-    build_tree(&path, &mut region_hierarchies);
-    manager.insert_region_hierarchy(region_hierarchies).await?;
-    Ok(())
-}
-fn build_tree(path: &[&Region], region_hierarchies: &mut Vec<RegionHierarchy>) {
-  let current_region = path.last().unwrap(); // Current region is the last in the path
-
-  // Add relationships for all ancestors in the path
-  for ancestor in path {
-    region_hierarchies.push(RegionHierarchy {
-      ancestor_id: ancestor.id,
-      descendant_id: current_region.id,
-    });
-  }
-
-  // Recurse for each subregion
-  for subregion in &current_region.subregions {
-    let mut new_path = path.to_vec();
-    new_path.push(subregion);
-    build_tree(&new_path, region_hierarchies);
-  }
-}
-static ROOT_REGION: Lazy<Region> = Lazy::new(|| {
+pub static ROOT_REGION: Lazy<Region> = Lazy::new(|| {
     serde_json::from_value(json!(
     {
       "id": 0,
