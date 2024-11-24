@@ -83,6 +83,11 @@ impl DBManager {
         let mut free_kilometers_filter_excl = vec![];
         let mut price_range_filter_excl = vec![];
 
+        let mut vollkasko_count = VollKaskoCount {
+            true_count,
+            false_count,
+        };
+
         for offer in offers {
             let mut seats_incl = true;
             let mut car_type_incl = true;
@@ -127,10 +132,24 @@ impl DBManager {
                 free_kilometers_incl,
                 price_range_incl,
             ) {
-                (true, true, true, true, true) => filtered_offers.push(offer),
+                (true, true, true, true, true) => {
+                    filtered_offers.push(offer);
+                    if offer.has_vollkasko {
+                        vollkasko_count.true_count += 1;
+                    } else {
+                        vollkasko_count.false_count += 1;
+                    }
+                },
                 (true, true, true, true, false) => price_range_filter_excl.push(offer),
                 (true, true, true, false, true) => free_kilometers_filter_excl.push(offer),
-                (true, true, false, true, true) => has_vollkasko_filter_excl.push(offer),
+                (true, true, false, true, true) => {
+                    has_vollkasko_filter_excl.push(offer);
+                    if offer.has_vollkasko {
+                        vollkasko_count.true_count += 1;
+                    } else {
+                        vollkasko_count.false_count += 1;
+                    }
+                },
                 (true, false, true, true, true) => car_type_filter_excl.push(offer),
                 (false, true, true, true, true) => seats_filter_excl.push(offer),
                 _ => {}
@@ -143,13 +162,6 @@ impl DBManager {
                 .copied()
                 .chain(price_range_filter_excl),
             request_offer.price_range_width,
-        );
-
-        let vollkasko_count2 = Self::to_vollkasko_offers(
-            filtered_offers
-                .iter()
-                .copied()
-                .chain(has_vollkasko_filter_excl),
         );
 
         let car_type_count2 =
@@ -181,7 +193,7 @@ impl DBManager {
             car_type_counts: car_type_count2,
             seats_count: seat_count_vec,
             free_kilometer_range: free_kilometer_bucket,
-            vollkasko_count: vollkasko_count2,
+            vollkasko_count,
         })
     }
 
