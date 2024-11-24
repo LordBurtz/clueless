@@ -31,25 +31,30 @@ impl RegionTree {
         }
     }
 
-    pub fn get_available_offers(&self, region_id: u32) -> impl Iterator<Item=u32> {
-        let mut offers = Vec::new();
-        self.get_available_offers_recursive(region_id, &mut offers);
-        offers.into_iter()
-    }
+  pub fn get_available_offers(&self, region_id: u32) -> impl Iterator<Item = u32> + '_ {
+    self.get_available_offers_recursive(region_id)
+  }
 
-    fn get_available_offers_recursive(&self, region_id: u32, offers: &mut Vec<u32>) {
-        offers.extend(&self.regions[region_id as usize].offers);
-        for sub_region_id in self.regions[region_id as usize]
-            .sub_regions
-            .iter()
-            .flatten()
-            .copied()
-        {
-            self.get_available_offers_recursive(sub_region_id, offers);
-        }
-    }
+  fn get_available_offers_recursive(
+    &self,
+    region_id: u32,
+  ) -> Box<dyn Iterator<Item = u32> + '_> {
+    let current_offers = self.regions[region_id as usize]
+        .offers
+        .iter()
+        .copied();
 
-    pub fn insert_offer(&mut self, region_id: u32, offer_idx: u32) {
+    let sub_region_offers = self.regions[region_id as usize]
+        .sub_regions
+        .iter()
+        .flatten()
+        .flat_map(move |&sub_region_id| self.get_available_offers_recursive(sub_region_id));
+
+    Box::new(current_offers.chain(sub_region_offers))
+  }
+
+
+  pub fn insert_offer(&mut self, region_id: u32, offer_idx: u32) {
         self.regions[region_id as usize].offers.push(offer_idx);
     }
 
