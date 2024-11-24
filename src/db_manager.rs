@@ -55,8 +55,8 @@ impl DBManager {
             )
             .map(|offer_idx| &dense_store.all[offer_idx as usize])
             .filter(|a| {
-                request_offer.number_days == ((a.end_date - a.start_date) / (1000 * 60 * 60 * 24)) as u32
-                    &&
+                // request_offer.number_days == ((a.end_date - a.start_date) / (1000 * 60 * 60 * 24)) as u32
+                //     &&
                 request_offer.time_range_start <= a.start_date
                     && request_offer.time_range_end >= a.end_date
             }).peekable();
