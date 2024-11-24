@@ -19,7 +19,7 @@ futures = "0.3.31"
 gxhash = "3.4.1"
 
 [build]
-rustflags = ["-C", "target-cpu=native", "target-feature=+aes,+sse2"]
+rustflags = ["-C", "target-cpu=native", "-C", "target-feature=+aes,+sse2"]
 
 [profile.release]
 debug = 2
