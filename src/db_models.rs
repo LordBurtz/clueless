@@ -1,8 +1,7 @@
-use clickhouse::Row;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-#[derive(Serialize, Deserialize, Debug, Clone, Row)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Offer {
     pub id: String,
     // TODO: optimize?
@@ -26,7 +25,7 @@ pub enum CarType {
     Family = 3,
 }
 
-#[derive(Serialize, Deserialize, Debug, Row)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct RegionHierarchy {
     pub ancestor_id: u32,
     pub descendant_id: u32,
