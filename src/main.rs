@@ -238,12 +238,7 @@ fn full<T: Into<Bytes>>(chunk: T) -> BoxBody {
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<()> {
-    // pretty_env_logger::init();
-    let db_client = clickhouse::Client::default()
-        .with_url("http://localhost:8123")
-        .with_user("default")
-        .with_database("check24");
-    let db_manager = Arc::new(DBManager::new(db_client));
+    let db_manager = Arc::new(DBManager::new());
     // db_manager.init().await?;
     let region_tree = RegionTree::populate_with_regions(&ROOT_REGION);
     if cfg!(debug_assertions) {

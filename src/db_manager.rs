@@ -7,32 +7,9 @@ use tokio::sync::RwLock;
 use crate::region_hierarchy::{RegionTree, ROOT_REGION};
 use crate::GenericError;
 pub struct DBManager {
-    pub client: clickhouse::Client,
     pub region_tree_lock: RwLock<RegionTree>,
     pub dense_store_lock: RwLock<DenseStore>,
 }
-
-const INSERT_QUERY: &str = r#"
-    INSERT INTO check24_db
-        (ID, data, mostSpecificRegionID,startDate, endDate, numberSeats, price, carType, hasVollkasko, freeKilometers)
-    VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
-"#;
-
-const SEARCH_QUERY: &str = r#"
-    SELECT *
-    FROM check24_db
-    WHERE
-        mostSpecificRegionID = ?1 AND
-        ?2 <= startDate AND
-        ?3 >= endDate AND
-        ?4 <= numberSeats AND
-        carType = ?5 AND
-        hasVollkasko = ?6 AND
-        freeKilometers >= ?7 AND
-        price BETWEEN ?9 AND ?0;
-"#;
-
-const DELETE_QUERY: &str = r#""DELETE FROM offers"#;
 
 impl CarType {
     fn eqMe(&self, other: &crate::json_models::CarType) -> bool {
@@ -47,74 +24,11 @@ impl CarType {
 }
 
 impl DBManager {
-    // pub fn new(client: clickhouse::Client, region_tree: RegionTree, dense_store: DenseStore) -> Self {
-    pub fn new(client: clickhouse::Client) -> Self {
+    pub fn new() -> Self {
         Self {
-            client,
             region_tree_lock: RegionTree::populate_with_regions(&ROOT_REGION).into(),
             dense_store_lock: DenseStore::new().into(),
         }
-    }
-
-    pub async fn init(&self) -> Result<(), GenericError> {
-        self.client
-            .query(
-                r#"
-    CREATE TABLE IF NOT EXISTS offers (
-        id VARCHAR(36) PRIMARY KEY,
-        data VARCHAR(256) NOT NULL,
-        most_specific_region_id UInt32 NOT NULL,
-        start_date UInt64 NOT NULL,
-        end_date UInt64 NOT NULL,
-        number_seats UInt32 NOT NULL,
-        price UInt32 NOT NULL,
-        car_type UInt8, -- Car type is a string
-        has_vollkasko BOOLEAN NOT NULL,
-        free_kilometers UInt32 NOT NULL
-    )
-    ENGINE = MergeTree
-    ORDER BY (id, has_vollkasko, car_type, number_seats, most_specific_region_id, free_kilometers, price, start_date, end_date);
-"#,
-            )
-            .execute()
-            .await?;
-
-        self.client
-            .query(
-                r#"
-        CREATE TABLE IF NOT EXISTS region_hierarchy (
-        ancestor_id UInt32,
-        descendant_id UInt32
-    ) ENGINE = MergeTree()
-    ORDER BY (ancestor_id, descendant_id);
-        "#,
-            )
-            .execute()
-            .await?;
-        Ok(())
-    }
-
-    pub async fn delete_region_hierarchy(&self) -> Result<(), GenericError> {
-        self.client
-            .query("TRUNCATE TABLE region_hierarchy")
-            .execute()
-            .await?;
-        Ok(())
-    }
-
-    pub async fn insert_region_hierarchy(
-        &self,
-        regions: Vec<RegionHierarchy>,
-    ) -> Result<(), GenericError> {
-        let mut insert = self.client.insert("region_hierarchy")?;
-
-        for region in regions {
-            insert.write(&region).await?;
-        }
-
-        insert.end().await?;
-
-        Ok(())
     }
 
     pub async fn query_for(
@@ -521,7 +435,14 @@ impl DBManager {
     }
 
     pub async fn cleanup(&self) -> Result<(), GenericError> {
-        self.client.query("TRUNCATE TABLE offers").execute().await?;
+        {
+            let mut region_tree_lock = self.region_tree_lock.write().await;
+            region_tree_lock.clear_offers();
+        }
+        {
+            let mut dense_store_lock = self.dense_store_lock.write().await;
+            dense_store_lock.all.clear();
+        }
         Ok(())
     }
 }
@@ -534,7 +455,7 @@ impl  DenseStore {
     pub fn new(
     ) -> Self {
         Self {
-            all: Vec::with_capacity(1 << 30),
+            all: Vec::with_capacity(1 << 25),
         }
     }
 
