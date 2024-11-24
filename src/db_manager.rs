@@ -46,13 +46,16 @@ impl DBManager {
         let dense_store = self.dense_store_lock.read().await;
         let region_tree = self.region_tree_lock.read().await;
         let number_of_days_index = self.number_of_days_index_lock.read().await;
-
+        let mut offers_size = 0;
         let mut offers = number_of_days_index
             .filter_offers(
                 request_offer.number_days,
                 region_tree.get_available_offers(request_offer.region_id),
             )
-            .map(|offer_idx| &dense_store.all[offer_idx as usize])
+            .map(|offer_idx| {
+                offers_size += 1;
+                &dense_store.all[offer_idx as usize]
+            })
             .filter(|a| {
                 // request_offer.number_days == ((a.end_date - a.start_date) / (1000 * 60 * 60 * 24)) as u32
                 //     &&
@@ -80,9 +83,7 @@ impl DBManager {
             });
         }
 
-        let (min_size, max_size) = offers.size_hint();
-        println!("min_size: {:?}, max_size: {:?}", min_size, max_size);
-        let mut filtered_offers = Vec::with_capacity(max_size.unwrap_or(min_size));
+        let mut filtered_offers = Vec::with_capacity((offers_size as f64 / 1.5) as usize);
 
         let mut vollkasko_count = VollKaskoCount {
             true_count: 0,
