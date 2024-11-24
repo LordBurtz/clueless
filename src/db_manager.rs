@@ -61,27 +61,7 @@ impl DBManager {
                 //     &&
                 request_offer.time_range_start <= a.start_date
                     && request_offer.time_range_end >= a.end_date
-            })
-            .peekable();
-
-        if offers.peek().is_none() {
-            return Ok(GetReponseBodyModel {
-                offers: vec![],
-                price_ranges: vec![],
-                car_type_counts: CarTypeCount {
-                    small: 0,
-                    sports: 0,
-                    luxury: 0,
-                    family: 0,
-                },
-                seats_count: vec![],
-                free_kilometer_range: vec![],
-                vollkasko_count: VollKaskoCount {
-                    true_count: 0,
-                    false_count: 0,
-                },
             });
-        }
 
         let mut filtered_offers = Vec::with_capacity((offers_size as f64 / 1.5) as usize);
 
