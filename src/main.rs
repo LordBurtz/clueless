@@ -1,4 +1,7 @@
 // #![deny(warnings)]
+
+#[global_allocator]
+static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 mod db_manager;
 mod db_models;
 mod json_models;

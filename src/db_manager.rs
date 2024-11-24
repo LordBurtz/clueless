@@ -16,7 +16,7 @@ pub struct DBManager {
 }
 
 impl CarType {
-    fn eqMe(&self, other: &crate::json_models::CarType) -> bool {
+    fn eq_me(&self, other: &crate::json_models::CarType) -> bool {
         match (self, other) {
             (CarType::Small, crate::json_models::CarType::Small) => true,
             (CarType::Sports, crate::json_models::CarType::Sports) => true,
@@ -57,7 +57,7 @@ impl DBManager {
             .collect::<Vec<_>>();
 
         if offers.is_empty() {
-            return Ok(crate::json_models::GetReponseBodyModel {
+            return Ok(GetReponseBodyModel {
                 offers: vec![],
                 price_ranges: vec![],
                 car_type_counts: CarTypeCount {
@@ -95,7 +95,7 @@ impl DBManager {
                 }
             }
             if let Some(carType) = request_offer.car_type {
-                if !offer.car_type.eqMe(&carType) {
+                if !offer.car_type.eq_me(&carType) {
                     car_type_incl = false
                 }
             }
@@ -225,22 +225,22 @@ impl DBManager {
                     };
                 }
                 CarTypeCount {
-                    small: if CarType::Small.eqMe(&filtered_car_type) {
+                    small: if CarType::Small.eq_me(&filtered_car_type) {
                         filtered_offers_count
                     } else {
                         small_excluded
                     },
-                    sports: if CarType::Sports.eqMe(&filtered_car_type) {
+                    sports: if CarType::Sports.eq_me(&filtered_car_type) {
                         filtered_offers_count
                     } else {
                         sports_excluded
                     },
-                    luxury: if CarType::Luxury.eqMe(&filtered_car_type) {
+                    luxury: if CarType::Luxury.eq_me(&filtered_car_type) {
                         filtered_offers_count
                     } else {
                         luxury_excluded
                     },
-                    family: if CarType::Family.eqMe(&filtered_car_type) {
+                    family: if CarType::Family.eq_me(&filtered_car_type) {
                         filtered_offers_count
                     } else {
                         family_excluded
@@ -251,23 +251,22 @@ impl DBManager {
     }
 
     fn sort_orders_and_paginate(
-        offers: Vec<&Offer>,
+        offers: &mut Vec<&Offer>,
         request_offer: RequestOffer,
     ) -> Vec<ResponseOffer> {
-        let mut local_offers = offers.into_iter().cloned().collect::<Vec<Offer>>();
-        if local_offers.is_empty() {
+        if offers.is_empty() {
             return vec![];
         }
 
         match request_offer.sort_order {
-            SortOrder::PriceAsc => local_offers.sort_by(|a, b| {
+            SortOrder::PriceAsc => offers.sort_by(|a, b| {
                 let comp = a.price.cmp(&b.price);
                 if comp.is_eq() {
                     return a.id.cmp(&b.id);
                 }
                 return comp;
             }),
-            SortOrder::PriceDesc => local_offers.sort_by(|a, b| {
+            SortOrder::PriceDesc => offers.sort_by(|a, b| {
                 let comp = b.price.cmp(&a.price);
                 if comp.is_eq() {
                     return a.id.cmp(&b.id);
@@ -276,13 +275,13 @@ impl DBManager {
             }),
         }
 
-        local_offers
+        offers
             .into_iter()
             .skip(((request_offer.page) * request_offer.page_size) as usize) // pagination starts at 0
             .take(request_offer.page_size as usize)
             .map(|o| ResponseOffer {
-                ID: o.id,
-                data: o.data,
+                ID: o.id.clone(),
+                data: o.data.clone(),
             })
             .collect()
     }
@@ -316,7 +315,7 @@ impl DBManager {
         });
 
         for offer in vec_offers_free_kilometers {
-            let FreeKilometerRange { start, end, count } = km_vec_vec.last_mut().unwrap();
+            let FreeKilometerRange { start: _start, end, count } = km_vec_vec.last_mut().unwrap();
             if offer.free_kilometers < *end {
                 *count += 1
             } else {
