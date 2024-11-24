@@ -44,14 +44,14 @@ impl DBManager {
     ) -> Result<GetReponseBodyModel, GenericError> {
         let dense_store = self.dense_store_lock.read().await;
         let region_tree = self.region_tree_lock.read().await;
-        // let number_of_days_index = self.number_of_days_index_lock.read().await;
+        let number_of_days_index = self.number_of_days_index_lock.read().await;
 
         let mut offers =
-            // number_of_days_index
-            // .filter_offers(
-            //     request_offer.number_days,
+            number_of_days_index
+            .filter_offers(
+                request_offer.number_days,
                 region_tree.get_available_offers(request_offer.region_id)
-            // )
+            )
             .map(|offer_idx| &dense_store.all[offer_idx as usize])
             .filter(|a| {
                 request_offer.number_days == ((a.end_date - a.start_date) / (1000 * 60 * 60 * 24)) as u32
@@ -80,16 +80,22 @@ impl DBManager {
         }
 
         let mut filtered_offers = vec![];
-        let mut seats_filter_excl = vec![];
-        let mut car_type_filter_excl = vec![];
-        let mut has_vollkasko_filter_excl = vec![];
-        let mut free_kilometers_filter_excl = vec![];
-        let mut price_range_filter_excl = vec![];
 
         let mut vollkasko_count = VollKaskoCount {
             true_count: 0,
             false_count: 0,
         };
+
+        let mut car_type_count = CarTypeCount {
+            small: 0,
+            sports: 0,
+            luxury: 0,
+            family: 0,
+        };
+
+        let mut free_kilometers_interval_mapping = FxHashMap::new();
+        let mut price_range_interval_mapping = FxHashMap::new();
+        let mut seats_count_map = FxHashMap::new();
 
         for offer in offers {
             let mut seats_incl = true;
@@ -142,47 +148,117 @@ impl DBManager {
                     } else {
                         vollkasko_count.false_count += 1;
                     }
+                    match offer.car_type {
+                        CarType::Small => car_type_count.small += 1,
+                        CarType::Sports => car_type_count.sports += 1,
+                        CarType::Luxury => car_type_count.luxury += 1,
+                        CarType::Family => car_type_count.family += 1,
+                    }
+                    let lower_bound = (offer.free_kilometers
+                        / request_offer.min_free_kilometer_width)
+                        * request_offer.min_free_kilometer_width;
+                    free_kilometers_interval_mapping
+                        .entry(lower_bound)
+                        .and_modify(|count| *count += 1)
+                        .or_insert(1);
+                    let lower_bound = (offer.price / request_offer.price_range_width)
+                        * request_offer.price_range_width;
+                    price_range_interval_mapping
+                        .entry(lower_bound)
+                        .and_modify(|count| *count += 1)
+                        .or_insert(1);
+                    seats_count_map
+                        .entry(offer.number_seats)
+                        .and_modify(|count| *count += 1)
+                        .or_insert(1);
                 }
-                (true, true, true, true, false) => price_range_filter_excl.push(offer),
-                (true, true, true, false, true) => free_kilometers_filter_excl.push(offer),
+                (true, true, true, true, false) => {
+                    let lower_bound = (offer.price / request_offer.price_range_width)
+                        * request_offer.price_range_width;
+                    price_range_interval_mapping
+                        .entry(lower_bound)
+                        .and_modify(|count| *count += 1)
+                        .or_insert(1);
+                }
+                (true, true, true, false, true) => {
+                    let lower_bound = (offer.free_kilometers
+                        / request_offer.min_free_kilometer_width)
+                        * request_offer.min_free_kilometer_width;
+                    free_kilometers_interval_mapping
+                        .entry(lower_bound)
+                        .and_modify(|count| *count += 1)
+                        .or_insert(1);
+                }
                 (true, true, false, true, true) => {
-                    has_vollkasko_filter_excl.push(offer);
                     if offer.has_vollkasko {
                         vollkasko_count.true_count += 1;
                     } else {
                         vollkasko_count.false_count += 1;
                     }
                 }
-                (true, false, true, true, true) => car_type_filter_excl.push(offer),
-                (false, true, true, true, true) => seats_filter_excl.push(offer),
+                (true, false, true, true, true) => {
+                    match offer.car_type {
+                        CarType::Small => car_type_count.small += 1,
+                        CarType::Sports => car_type_count.sports += 1,
+                        CarType::Luxury => car_type_count.luxury += 1,
+                        CarType::Family => car_type_count.family += 1,
+                    }
+                }
+                (false, true, true, true, true) => {
+                    seats_count_map
+                        .entry(offer.number_seats)
+                        .and_modify(|count| *count += 1)
+                        .or_insert(1);
+                }
                 _ => {}
             }
         }
 
-        let price_range_bucket = Self::to_price_ranges_offers(
-            filtered_offers
-                .iter()
-                .copied()
-                .chain(price_range_filter_excl),
-            request_offer.price_range_width,
-        );
+        // let price_range_bucket = Self::to_price_ranges_offers(
+        //     filtered_offers
+        //         .iter()
+        //         .copied()
+        //         .chain(price_range_filter_excl),
+        //     request_offer.price_range_width,
+        // );
 
-        let car_type_count2 =
-            Self::to_car_type_count(filtered_offers.iter().copied().chain(car_type_filter_excl));
+        // let car_type_count2 =
+        //     Self::to_car_type_count(filtered_offers.iter().copied().chain(car_type_filter_excl));
 
-        let list_for_it = filtered_offers
-            .iter()
-            .copied()
-            .chain(free_kilometers_filter_excl);
-        let free_kilometer_bucket =
-            Self::to_free_kilometers_offers(list_for_it, request_offer.min_free_kilometer_width);
+        // let list_for_it = filtered_offers
+        //     .iter()
+        //     .copied()
+        //     .chain(free_kilometers_filter_excl);
+        // let free_kilometer_bucket =
+        //     Self::to_free_kilometers_offers(list_for_it, request_offer.min_free_kilometer_width);
 
         //
         // calculate seat count
         //
 
-        let seat_count_vec =
-            Self::to_seat_number_offers(filtered_offers.iter().copied().chain(seats_filter_excl));
+        // let seat_count_vec =
+        //     Self::to_seat_number_offers(filtered_offers.iter().copied().chain(seats_filter_excl));
+
+        let mut price_ranges = Vec::with_capacity(price_range_interval_mapping.len());
+
+        for key in price_range_interval_mapping.keys().sorted() {
+            let count = price_range_interval_mapping[key];
+            price_ranges.push(PriceRange {
+                start: *key,
+                end: *key + request_offer.price_range_width,
+                count,
+            });
+        }
+
+        let mut kilometer_ranges = Vec::with_capacity(free_kilometers_interval_mapping.len());
+        for key in free_kilometers_interval_mapping.keys().sorted() {
+            let count = free_kilometers_interval_mapping[key];
+            kilometer_ranges.push(FreeKilometerRange {
+                start: *key,
+                end: *key + request_offer.min_free_kilometer_width,
+                count,
+            });
+        }
 
         //
         // Apply all optional filters, then paginate and return
@@ -192,10 +268,16 @@ impl DBManager {
 
         Ok(GetReponseBodyModel {
             offers: paged_offers,
-            price_ranges: price_range_bucket,
-            car_type_counts: car_type_count2,
-            seats_count: seat_count_vec,
-            free_kilometer_range: free_kilometer_bucket,
+            price_ranges: price_ranges,
+            car_type_counts: car_type_count,
+            seats_count: seats_count_map
+                .into_iter()
+                .map(|(number_seats, count)| SeatCount {
+                    number_seats,
+                    count,
+                })
+                .collect(),
+            free_kilometer_range: kilometer_ranges,
             vollkasko_count,
         })
     }
