@@ -63,7 +63,7 @@ impl DBManager {
                     && request_offer.time_range_end >= a.end_date
             });
 
-        let mut filtered_offers = Vec::with_capacity((offers_size as f64 / 1.5) as usize);
+        let mut filtered_offers = Vec::new();
 
         let mut vollkasko_count = VollKaskoCount {
             true_count: 0,
