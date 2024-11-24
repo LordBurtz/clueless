@@ -5,6 +5,7 @@ mod db_models;
 mod json_models;
 mod number_of_days;
 mod region_hierarchy;
+mod interval_tree;
 
 use json_models::*;
 
@@ -22,6 +23,7 @@ use sonic_rs::{get_from_bytes_unchecked, to_array_iter_unchecked, JsonValueTrait
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
+use crate::interval_tree::Interval;
 
 type GenericError = Box<dyn std::error::Error + Send + Sync>;
 type Result<T> = std::result::Result<T, GenericError>;
@@ -51,6 +53,7 @@ async fn api_post_response(
     let mut dense_store = manager.dense_store_lock.write().await;
     let mut region_tree = manager.region_tree_lock.write().await;
     let mut number_of_days_index = manager.number_of_days_index_lock.write().await;
+    let mut time_range_index = manager.time_range_tree_lock.write().await;
 
     // let data_store = manager.dense_store_lock.get_mut().awa;
     for elem in iter {
@@ -131,6 +134,7 @@ async fn api_post_response(
                 dense_store.all.push(offer);
                 region_tree.insert_offer(most_specific_region_id as u8, idx);
                 number_of_days_index.index_offer(&dense_store.all[idx as usize]);
+                time_range_index.insert(Interval::new(start_date, end_date), idx);
             }
             Err(err) => {
                 // Handle parsing errors
