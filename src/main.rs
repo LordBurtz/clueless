@@ -165,7 +165,7 @@ async fn handle_get_offers_request(
     let (response, status_code) = match manager.query_for(query).await {
         Ok(res) => {
             // normally use res but now mock
-            let json = serde_json::to_string(&res)?;
+            let json = sonic_rs::to_string(&res)?;
 
             (full(json), StatusCode::OK)
         }

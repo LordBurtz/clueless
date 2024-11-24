@@ -1,6 +1,5 @@
 use crate::db_models;
-use serde::{Deserialize, Serialize};
-
+use sonic_rs::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RequestOffer {
