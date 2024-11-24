@@ -1,14 +1,18 @@
 use crate::db_models::{CarType, Offer, RegionHierarchy};
 use crate::json_models::{
-    CarTypeCount, FreeKilometerRange, GetReponseBodyModel, PriceRange,
-    RequestOffer, ResponseOffer, SeatCount, SortOrder, VollKaskoCount,
+    CarTypeCount, FreeKilometerRange, GetReponseBodyModel, PriceRange, RequestOffer, ResponseOffer,
+    SeatCount, SortOrder, VollKaskoCount,
 };
+use tokio::sync::RwLock;
 // use crate::tree_exp::DenseStore;
+use crate::region_hierarchy::{RegionTree, ROOT_REGION};
 use crate::GenericError;
 
-#[derive(Clone)]
+// #[derive(Clone)]
 pub struct DBManager {
     pub client: clickhouse::Client,
+    pub region_tree_lock: RwLock<RegionTree>,
+    pub dense_store_lock: RwLock<DenseStore>,
 }
 
 const INSERT_QUERY: &str = r#"
@@ -47,7 +51,11 @@ impl CarType {
 
 impl DBManager {
     pub fn new(client: clickhouse::Client) -> Self {
-        Self { client }
+        Self {
+            client,
+            region_tree_lock: RegionTree::populate_with_regions(&ROOT_REGION).into(),
+            dense_store_lock: DenseStore::new().into(),
+        }
     }
 
     pub async fn init(&self) -> Result<(), GenericError> {
@@ -115,36 +123,43 @@ impl DBManager {
         &self,
         request_offer: RequestOffer,
     ) -> Result<GetReponseBodyModel, GenericError> {
-        let query_string: String = "SELECT ?fields
-        FROM offers
-        JOIN region_hierarchy rh ON offers.most_specific_region_id = rh.descendant_id
-        WHERE
-            rh.ancestor_id = ? AND
-            ? <= start_date AND
-            ? >= end_date AND
-            end_date - start_date = ?"
-            .to_string();
+        // let query_string: String = "SELECT ?fields
+        // FROM offers
+        // JOIN region_hierarchy rh ON offers.most_specific_region_id = rh.descendant_id
+        // WHERE
+        //     rh.ancestor_id = ? AND
+        //     ? <= start_date AND
+        //     ? >= end_date AND
+        //     end_date - start_date = ?"
+        //     .to_string();
 
-        let query = self
-            .client
-            .query(&query_string)
-            .bind(request_offer.region_id)
-            .bind(request_offer.time_range_start)
-            .bind(request_offer.time_range_end)
-            .bind(request_offer.number_days * 24 * 60 * 60 * 1000);
+        // let query = self
+        //     .client
+        //     .query(&query_string)
+        //     .bind(request_offer.region_id)
+        //     .bind(request_offer.time_range_start)
+        //     .bind(request_offer.time_range_end)
+        //     .bind(request_offer.number_days * 24 * 60 * 60 * 1000);
 
+        let dense_store = self.dense_store_lock.read().await;
+        let region_tree = self.region_tree_lock.read().await;
 
-        // let second_store = DenseStore::new();
-        //
-        // let second_offers = second_store.all.iter().filter(|a| {
-        //     request_offer.time_range_start <= a.start_date && request_offer.time_range_end >= a.end_date &&
-        //         (a.end_date - a.start_date) == (request_offer.number_days * 24 * 60 * 60 * 1000) as u64
-        // });
+        let offers = region_tree.get_available_offers(request_offer.region_id)
+            .map(|offer_idx| {
+                &dense_store.all[offer_idx as usize]
+            })
+            .filter(|a| {
+            (a.end_date - a.start_date) == (request_offer.number_days * 24 * 60 * 60 * 1000) as u64
+            && request_offer.time_range_start <= a.start_date
+            && request_offer.time_range_end >= a.end_date
+            })
+            .collect::<Vec<_>>()
+            ;
 
         //
         //Results of db query
         //
-        let offers = query.fetch_all::<Offer>().await?;
+        // let offers = query.fetch_all::<Offer>().await?;
 
         // todo passt eig so
         if offers.is_empty() {
@@ -173,7 +188,7 @@ impl DBManager {
         let mut free_kilometers_filter_excl = vec![];
         let mut price_range_filter_excl = vec![];
 
-        for offer in &offers {
+        for offer in offers.iter().copied() {
             let mut seats_incl = true;
             let mut car_type_incl = true;
             let mut only_vollkasko_ignored = true;
@@ -227,48 +242,51 @@ impl DBManager {
             }
         }
 
-        let filtered_offers_count = filtered_offers.len() as u32;
+        // let filtered_offers_count = filtered_offers.len() as u32;
 
         //
         // Count vollkasko and car type options
         //
 
-        let vollkasko_count = match request_offer.only_vollkasko {
-            None => VollKaskoCount {
-                true_count: filtered_offers
-                    .iter()
-                    .filter(|offer| offer.has_vollkasko)
-                    .count() as u32,
-                false_count: filtered_offers
-                    .iter()
-                    .filter(|offer| !offer.has_vollkasko)
-                    .count() as u32,
-            },
-            Some(only_vollkasko) => VollKaskoCount {
-                true_count: filtered_offers_count
-                    + if only_vollkasko {
-                    0
-                } else {
-                    has_vollkasko_filter_excl.len() as u32
-                },
-                false_count: filtered_offers_count
-                    + if !only_vollkasko {
-                    0
-                } else {
-                    has_vollkasko_filter_excl.len() as u32
-                },
-            },
-        };
+        // let vollkasko_count = match request_offer.only_vollkasko {
+        //     None => VollKaskoCount {
+        //         true_count: filtered_offers
+        //             .iter()
+        //             .filter(|offer| offer.has_vollkasko)
+        //             .count() as u32,
+        //         false_count: filtered_offers
+        //             .iter()
+        //             .filter(|offer| !offer.has_vollkasko)
+        //             .count() as u32,
+        //     },
+        //     Some(only_vollkasko) => VollKaskoCount {
+        //         true_count: filtered_offers_count
+        //             + if only_vollkasko {
+        //                 0
+        //             } else {
+        //                 has_vollkasko_filter_excl.len() as u32
+        //             },
+        //         false_count: filtered_offers_count
+        //             + if !only_vollkasko {
+        //                 0
+        //             } else {
+        //                 has_vollkasko_filter_excl.len() as u32
+        //             },
+        //     },
+        // };
 
-        let car_type_count =
-            Self::get_car_type_count(&offers, &car_type_filter_excl, &request_offer);
+        // let car_type_count =
+            // Self::get_car_type_count(&offers, &car_type_filter_excl, &request_offer);
 
         //
         // price range slicing
         //
 
         let price_range_bucket = Self::toPriceRangesOffers(
-            filtered_offers.iter().copied().chain(price_range_filter_excl),
+            filtered_offers
+                .iter()
+                .copied()
+                .chain(price_range_filter_excl),
             request_offer.price_range_width,
         );
 
@@ -276,19 +294,22 @@ impl DBManager {
         // free kilometers slicing
         //
 
-        let vollkasko_count2 =
-            Self::toVollkaskoOffers(filtered_offers.iter().copied().chain(has_vollkasko_filter_excl));
-        // let defsi = car_type_count;
-        let sid = vollkasko_count;
-        let car_type_count2 = Self::to_car_type_count(filtered_offers.iter().copied().chain(car_type_filter_excl));
-
-
-        let listForIt = filtered_offers.iter().copied().chain(free_kilometers_filter_excl);
-        let free_kilometer_bucket = Self::toFreeKilometersOffers(
-            listForIt,
-            request_offer.min_free_kilometer_width,
+        let vollkasko_count2 = Self::toVollkaskoOffers(
+            filtered_offers
+                .iter()
+                .copied()
+                .chain(has_vollkasko_filter_excl),
         );
+        // let defsi = car_type_count;
+        let car_type_count2 =
+            Self::to_car_type_count(filtered_offers.iter().copied().chain(car_type_filter_excl));
 
+        let listForIt = filtered_offers
+            .iter()
+            .copied()
+            .chain(free_kilometers_filter_excl);
+        let free_kilometer_bucket =
+            Self::toFreeKilometersOffers(listForIt, request_offer.min_free_kilometer_width);
 
         //
         // calculate seat count
@@ -330,7 +351,7 @@ impl DBManager {
                         CarType::Small => small += 1,
                         CarType::Sports => sports += 1,
                         CarType::Luxury => luxury += 1,
-                        CarType::Family => family += 1
+                        CarType::Family => family += 1,
                     }
                 }
                 CarTypeCount {
@@ -384,7 +405,9 @@ impl DBManager {
         request_offer: RequestOffer,
     ) -> Vec<ResponseOffer> {
         let mut local_offers = offers.into_iter().cloned().collect::<Vec<Offer>>();
-        if local_offers.is_empty() { return vec![]; }
+        if local_offers.is_empty() {
+            return vec![];
+        }
 
         match request_offer.sort_order {
             SortOrder::PriceAsc => local_offers.sort_by(|a, b| {
@@ -415,13 +438,14 @@ impl DBManager {
     }
 
     fn toFreeKilometersOffers<'a>(
-        offers: impl Iterator<Item=&'a Offer>,
+        offers: impl Iterator<Item = &'a Offer>,
         min_free_kilometer_width: u32,
     ) -> Vec<FreeKilometerRange> {
-
         let mut vec_offers_free_kilometers = offers.collect::<Vec<&Offer>>();
 
-        if vec_offers_free_kilometers.is_empty() { return vec![]; }
+        if vec_offers_free_kilometers.is_empty() {
+            return vec![];
+        }
 
         vec_offers_free_kilometers.sort_by(|a, b| a.free_kilometers.cmp(&b.free_kilometers));
         let head = vec_offers_free_kilometers.first().unwrap();
@@ -460,7 +484,7 @@ impl DBManager {
         return km_vec_vec;
     }
 
-    fn toVollkaskoOffers<'a>(offers: impl Iterator<Item=&'a Offer>) -> VollKaskoCount {
+    fn toVollkaskoOffers<'a>(offers: impl Iterator<Item = &'a Offer>) -> VollKaskoCount {
         // counts for vollkasko occurences
         let (mut true_count, mut false_count) = (0, 0);
 
@@ -478,7 +502,7 @@ impl DBManager {
         }
     }
 
-    fn to_car_type_count<'a>(offers: impl Iterator<Item=&'a Offer>) -> CarTypeCount {
+    fn to_car_type_count<'a>(offers: impl Iterator<Item = &'a Offer>) -> CarTypeCount {
         // counts for car types
         let (mut small, mut sports, mut luxury, mut family) = (0, 0, 0, 0);
 
@@ -500,11 +524,13 @@ impl DBManager {
     }
 
     pub fn toPriceRangesOffers<'a>(
-        offers: impl Iterator<Item=&'a Offer>,
+        offers: impl Iterator<Item = &'a Offer>,
         price_range_width: u32,
     ) -> Vec<PriceRange> {
         let mut vec_offers_price_range = offers.collect::<Vec<&Offer>>();
-        if vec_offers_price_range.is_empty() { return vec![]; }
+        if vec_offers_price_range.is_empty() {
+            return vec![];
+        }
 
         vec_offers_price_range.sort_by(|a, b| a.price.cmp(&b.price));
         let head = vec_offers_price_range.first().unwrap();
@@ -525,7 +551,11 @@ impl DBManager {
         });
 
         for offer in vec_offers_price_range {
-            let PriceRange { start: _, end, count } = km_vec_vec.last_mut().unwrap();
+            let PriceRange {
+                start: _,
+                end,
+                count,
+            } = km_vec_vec.last_mut().unwrap();
             if offer.price < *end {
                 *count += 1
             } else {
@@ -542,7 +572,7 @@ impl DBManager {
         return km_vec_vec;
     }
 
-    pub fn toSeatNumberOffers<'a>(offers: impl Iterator<Item=&'a Offer>) -> Vec<SeatCount> {
+    pub fn toSeatNumberOffers<'a>(offers: impl Iterator<Item = &'a Offer>) -> Vec<SeatCount> {
         let mut vec_number_seats = offers.collect::<Vec<&Offer>>();
         vec_number_seats.sort_by(|a, b| a.number_seats.cmp(&b.number_seats));
 
@@ -560,7 +590,26 @@ impl DBManager {
     }
 
     pub async fn cleanup(&self) -> Result<(), GenericError> {
-        self.client.query("TRUNCATE TABLE offers").execute().await?;
+        // self.client.query("TRUNCATE TABLE offers").execute().await?;
+        let mut dense_store = self.dense_store_lock.write().await;
+        dense_store.all.clear();
+        let mut region_tree = self.region_tree_lock.write().await;
+        region_tree.clear_offers();
         Ok(())
+    }
+}
+
+#[derive(Clone)]
+pub struct DenseStore {
+    pub all: Vec<Offer>,
+}
+
+impl DenseStore {
+    pub fn new() -> Self {
+        Self { all: Vec::new() }
+    }
+
+    pub fn insert(&mut self, offer: Offer) {
+        self.all.push(offer);
     }
 }

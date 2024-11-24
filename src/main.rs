@@ -46,15 +46,17 @@ async fn api_post_response(
 
     let iter = unsafe { to_array_iter_unchecked(root_value.as_raw_str()) };
 
-    let mut insert = manager.client.insert("offers")?;
+    // let mut insert = manager.client.insert("offers")?;
 
     if cfg!(debug_assertions) {
         println!("Inserting offers");
     }
 
 
-    let start = std::time::Instant::now();
+    let mut dense_store = manager.dense_store_lock.write().await;
+    let mut region_tree = manager.region_tree_lock.write().await;
 
+    // let data_store = manager.dense_store_lock.get_mut().awa;
     for elem in iter {
         match elem {
             Ok(json_value) => {
@@ -129,7 +131,10 @@ async fn api_post_response(
                 };
 
                 // Write each offer to the database
-                insert.write(&offer).await?;
+                // insert.write(&offer).await?;
+                let len = dense_store.all.len() as u32;
+                dense_store.all.push(offer);
+                region_tree.insert_offer(most_specific_region_id as u8,len);
             }
             Err(err) => {
                 // Handle parsing errors
@@ -142,13 +147,13 @@ async fn api_post_response(
         }
     }
 
-    insert.end().await?;
+    // insert.end().await?;
 
-    let end = start.elapsed();
+    // let end = start.elapsed();
 
-    if cfg!(debug_assertions) {
-        println!("Inserting offers took {:?}ms", end.as_millis());
-    }
+    // if cfg!(debug_assertions) {
+    //     println!("Inserting offers took {:?}ms", end.as_millis());
+    // }
 
     let response = Response::builder()
         .status(StatusCode::OK)
@@ -240,7 +245,7 @@ async fn main() -> Result<()> {
         .with_database("check24");
 
     let db_manager = Arc::new(DBManager::new(db_client));
-    db_manager.init().await?;
+    // db_manager.init().await?;
     let region_tree = RegionTree::populate_with_regions(&ROOT_REGION);
     if cfg!(debug_assertions) {
         println!("{:?}", region_tree);

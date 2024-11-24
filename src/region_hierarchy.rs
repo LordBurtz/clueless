@@ -5,10 +5,10 @@ use serde_json::json;
 #[derive(Default, Clone, Debug)]
 struct RegionTreeElement {
     offers: Vec<u32>,
-    sub_regions: Option<Vec<u32>>,
+    sub_regions: Option<Vec<u8>>,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct RegionTree {
     regions: Vec<RegionTreeElement>,
 }
@@ -31,13 +31,19 @@ impl RegionTree {
         }
     }
 
-  pub fn get_available_offers(&self, region_id: u32) -> impl Iterator<Item = u32> + '_ {
+  pub fn get_available_offers(&self, region_id: u8) -> impl Iterator<Item = u32> + '_ {
     self.get_available_offers_recursive(region_id)
+  }
+
+  pub fn clear_offers(&mut self) {
+    for element in &mut self.regions {
+      element.offers.clear();
+    }
   }
 
   fn get_available_offers_recursive(
     &self,
-    region_id: u32,
+    region_id: u8,
   ) -> Box<dyn Iterator<Item = u32> + '_> {
     let current_offers = self.regions[region_id as usize]
         .offers
@@ -54,11 +60,11 @@ impl RegionTree {
   }
 
 
-  pub fn insert_offer(&mut self, region_id: u32, offer_idx: u32) {
+  pub fn insert_offer(&mut self, region_id: u8, offer_idx: u32) {
         self.regions[region_id as usize].offers.push(offer_idx);
     }
 
-    pub fn insert_offers(&mut self, region_id: u32, offer_idxs: impl IntoIterator<Item = u32>) {
+    pub fn insert_offers(&mut self, region_id: u8, offer_idxs: impl IntoIterator<Item = u32>) {
         self.regions[region_id as usize].offers.extend(offer_idxs);
     }
 }
@@ -88,7 +94,7 @@ mod test {
 
 #[derive(Deserialize, Clone)]
 pub struct Region {
-    id: u32,
+    id: u8,
     subregions: Vec<Region>,
 }
 
