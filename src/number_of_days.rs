@@ -1,6 +1,6 @@
-use fxhash::FxHashMap;
-use gxhash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use crate::db_models::Offer;
+use fxhash::FxHashMap;
+use gxhash::HashMapExt;
 
 pub struct NumberOfDaysIndex {
     map: FxHashMap<u32, Vec<u32>>,
@@ -13,13 +13,17 @@ impl NumberOfDaysIndex {
         }
     }
 
-    pub fn filter_offers(&self, days: u32, offers: impl Iterator<Item=u32>) -> impl Iterator<Item=u32> {
-        let set = if let Some(set) = self.map.get(&days) {
-            HashSet::from_iter(set.iter().copied())
+    pub fn filter_offers(&self, days: u32, offers: impl Iterator<Item = u32>) -> impl Iterator<Item = u32> {
+        if let Some(set) = self.map.get(&days) {
+            let sorted_set: Vec<u32> = {
+                let mut vec: Vec<u32> = set.iter().copied().collect();
+                vec.sort_unstable();
+                vec
+            };
+            offers.filter(move |offer| sorted_set.binary_search(offer).is_ok())
         } else {
-            HashSet::new()
-        };
-        offers.filter(move |offer| set.contains(offer))
+            offers.filter(|_| false)
+        }
     }
 
     pub fn index_offer(&mut self, offer: &Offer) {
