@@ -13,16 +13,20 @@ impl NumberOfDaysIndex {
         }
     }
 
-    pub fn filter_offers(&self, days: u32, offers: impl Iterator<Item = u32>) -> impl Iterator<Item = u32> {
+    pub fn filter_offers<'a>(
+        &'a self,
+        days: u32,
+        offers: impl Iterator<Item = u32> + 'a,
+    ) -> Box<dyn Iterator<Item = u32> + 'a> {
         if let Some(set) = self.map.get(&days) {
             let sorted_set: Vec<u32> = {
                 let mut vec: Vec<u32> = set.iter().copied().collect();
                 vec.sort_unstable();
                 vec
             };
-            offers.filter(move |offer| sorted_set.binary_search(offer).is_ok())
+            Box::new(offers.filter(move |offer| sorted_set.binary_search(offer).is_ok()))
         } else {
-            offers.filter(|_| false)
+            Box::new(offers.filter(|_| false))
         }
     }
 
