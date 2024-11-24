@@ -87,8 +87,8 @@ impl DBManager {
         let mut price_range_filter_excl = vec![];
 
         let mut vollkasko_count = VollKaskoCount {
-            true_count,
-            false_count,
+            true_count: 0,
+            false_count: 0,
         };
 
         for offer in offers {
