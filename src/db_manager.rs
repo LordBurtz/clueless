@@ -57,7 +57,7 @@ impl DBManager {
                     && request_offer.time_range_end >= a.end_date
             }).peekable();
 
-        if offers.peek().is_some() {
+        if offers.peek().is_none() {
             return Ok(GetReponseBodyModel {
                 offers: vec![],
                 price_ranges: vec![],
