@@ -1,2 +1,5 @@
 [build]
-rustflags = ["-C", "target-cpu=native", "-C", "target-feature=+aes,+sse2"]
+rustflags = [
+    "-C", "target-cpu=native",
+    "-C", "target-feature=+aes,+sse2",
+    "-Cprofile-use=/home/challenger/clueless/target/pgo-profiles/merged-2f3cc654d45cbe6171b3b1abe28c773d15df9cb8f16137d2e29f4f5e82ab7a6f.profdata."]
