@@ -44,15 +44,18 @@ impl DBManager {
     ) -> Result<GetReponseBodyModel, GenericError> {
         let dense_store = self.dense_store_lock.read().await;
         let region_tree = self.region_tree_lock.read().await;
-        let number_of_days_index = self.number_of_days_index_lock.read().await;
+        // let number_of_days_index = self.number_of_days_index_lock.read().await;
 
-        let mut offers = number_of_days_index
-            .filter_offers(
-                request_offer.number_days,
-                region_tree.get_available_offers(request_offer.region_id),
-            )
+        let mut offers =
+            // number_of_days_index
+            // .filter_offers(
+            //     request_offer.number_days,
+                region_tree.get_available_offers(request_offer.region_id)
+            // )
             .map(|offer_idx| &dense_store.all[offer_idx as usize])
             .filter(|a| {
+                request_offer.number_days == ((a.end_date - a.start_date) / (1000 * 60 * 60 * 24)) as u32
+                    &&
                 request_offer.time_range_start <= a.start_date
                     && request_offer.time_range_end >= a.end_date
             }).peekable();
@@ -139,7 +142,7 @@ impl DBManager {
                     } else {
                         vollkasko_count.false_count += 1;
                     }
-                },
+                }
                 (true, true, true, true, false) => price_range_filter_excl.push(offer),
                 (true, true, true, false, true) => free_kilometers_filter_excl.push(offer),
                 (true, true, false, true, true) => {
@@ -149,7 +152,7 @@ impl DBManager {
                     } else {
                         vollkasko_count.false_count += 1;
                     }
-                },
+                }
                 (true, false, true, true, true) => car_type_filter_excl.push(offer),
                 (false, true, true, true, true) => seats_filter_excl.push(offer),
                 _ => {}

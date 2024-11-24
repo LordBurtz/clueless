@@ -31,8 +31,8 @@ impl NumberOfDaysIndex {
     }
 
     pub fn index_offer(&mut self, offer: &Offer) {
-        let days = ((offer.end_date - offer.start_date) / (1000 * 60 * 60 * 24)) as u32;
-        self.map.entry(days).or_default().push(offer.idx);
+        // let days = ((offer.end_date - offer.start_date) / (1000 * 60 * 60 * 24)) as u32;
+        // self.map.entry(days).or_default().push(offer.idx);
     }
 
     pub fn clear(&mut self) {
