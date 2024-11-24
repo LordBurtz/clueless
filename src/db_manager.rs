@@ -7,7 +7,8 @@ use crate::number_of_days::NumberOfDaysIndex;
 use crate::region_hierarchy::{RegionTree, ROOT_REGION};
 use crate::GenericError;
 use fxhash::FxHashMap;
-use gxhash::{HashMapExt};
+use gxhash::HashMapExt;
+use itertools::Itertools;
 use tokio::sync::RwLock;
 
 pub struct DBManager {
@@ -294,21 +295,23 @@ impl DBManager {
         let mut interval_mapping = FxHashMap::new();
 
         for offer in offers {
-            let lower_bound = (offer.price / free_kilometer_width) * free_kilometer_width;
+            let lower_bound = (offer.free_kilometers / free_kilometer_width) * free_kilometer_width;
             interval_mapping
                 .entry(lower_bound)
                 .and_modify(|count| *count += 1)
                 .or_insert(1);
         }
 
-        interval_mapping
-            .into_iter()
-            .map(|(lower_bound, count)| FreeKilometerRange {
-                start: lower_bound,
-                end: lower_bound + free_kilometer_width,
+        let mut kilometer_ranges = Vec::with_capacity(interval_mapping.len());
+        for key in interval_mapping.keys().sorted() {
+            let count = interval_mapping[key];
+            kilometer_ranges.push(FreeKilometerRange {
+                start: *key,
+                end: *key + free_kilometer_width,
                 count,
-            })
-            .collect()
+            });
+        }
+        kilometer_ranges
     }
 
     fn to_vollkasko_offers<'a>(offers: impl Iterator<Item = &'a Offer>) -> VollKaskoCount {
@@ -364,14 +367,18 @@ impl DBManager {
                 .or_insert(1);
         }
 
-        interval_mapping
-            .into_iter()
-            .map(|(lower_bound, count)| PriceRange {
-                start: lower_bound,
-                end: lower_bound + price_range_width,
+        let mut price_ranges = Vec::with_capacity(interval_mapping.len());
+
+        for key in interval_mapping.keys().sorted() {
+            let count = interval_mapping[key];
+            price_ranges.push(PriceRange {
+                start: *key,
+                end: *key + price_range_width,
                 count,
-            })
-            .collect()
+            });
+        }
+
+        price_ranges
     }
 
     pub fn to_seat_number_offers<'a>(offers: impl Iterator<Item = &'a Offer>) -> Vec<SeatCount> {

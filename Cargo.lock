@@ -79,6 +79,7 @@ dependencies = [
  "http-body-util",
  "hyper",
  "hyper-util",
+ "itertools",
  "once_cell",
  "serde",
  "serde_json",
@@ -87,6 +88,12 @@ dependencies = [
  "sonic-rs",
  "tokio",
 ]
+
+[[package]]
+name = "either"
+version = "1.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "60b1af1c220855b6ceac025d3f6ecdd2b7c4894bfe9cd9bda4fbb4bc7c0d4cf0"
 
 [[package]]
 name = "faststr"
@@ -311,6 +318,15 @@ dependencies = [
  "hyper",
  "pin-project-lite",
  "tokio",
+]
+
+[[package]]
+name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+dependencies = [
+ "either",
 ]
 
 [[package]]
