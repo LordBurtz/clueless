@@ -6,18 +6,16 @@ use crate::json_models::{
 use crate::number_of_days::NumberOfDaysIndex;
 use crate::region_hierarchy::{RegionTree, ROOT_REGION};
 use crate::GenericError;
-use fxhash::{FxBuildHasher, FxHashMap, FxHashSet};
+use fxhash::{FxBuildHasher, FxHashMap};
 use gxhash::HashMapExt;
 use itertools::Itertools;
 use std::collections::HashMap;
 use tokio::sync::RwLock;
-use crate::interval_tree::{Interval, IntervalTree};
 
 pub struct DBManager {
     pub region_tree_lock: RwLock<RegionTree>,
     pub dense_store_lock: RwLock<DenseStore>,
     pub number_of_days_index_lock: RwLock<NumberOfDaysIndex>,
-    pub time_range_tree_lock: RwLock<IntervalTree<u64, u32>>,
 }
 
 impl CarType {
@@ -38,14 +36,7 @@ impl DBManager {
             region_tree_lock: RegionTree::populate_with_regions(&ROOT_REGION).into(),
             dense_store_lock: DenseStore::new().into(),
             number_of_days_index_lock: NumberOfDaysIndex::new().into(),
-            time_range_tree_lock: IntervalTree::new().into(),
         }
-    }
-
-    pub fn filter_time_ranges<'a>(tree: &IntervalTree<u64, u32>, offers: impl Iterator<Item = u32> + 'a, start_date: u64, end_date: u64) -> impl Iterator<Item = u32> + 'a {
-        let set = FxHashSet::from_iter(tree
-            .query(&Interval::new(start_date, end_date)).copied());
-        offers.filter(move |offer_idx| set.contains(offer_idx))
     }
 
     pub async fn query_for(
@@ -55,17 +46,18 @@ impl DBManager {
         let dense_store = self.dense_store_lock.read().await;
         let region_tree = self.region_tree_lock.read().await;
         let number_of_days_index = self.number_of_days_index_lock.read().await;
-        let time_range_tree = self.time_range_tree_lock.read().await;
-        let offers = Self::filter_time_ranges(
-            &time_range_tree,
-            number_of_days_index
-                .filter_offers(
-                    request_offer.number_days,
-                    region_tree.get_available_offers(request_offer.region_id),
-                ),
-                request_offer.time_range_start,
-                request_offer.time_range_end,
-        ).map(|offer_idx| &dense_store.all[offer_idx as usize]);
+        let mut offers = number_of_days_index
+            .filter_offers(
+                request_offer.number_days,
+                region_tree.get_available_offers(request_offer.region_id),
+            )
+            .map(|offer_idx| &dense_store.all[offer_idx as usize])
+            .filter(|a| {
+                // request_offer.number_days == ((a.end_date - a.start_date) / (1000 * 60 * 60 * 24)) as u32
+                //     &&
+                request_offer.time_range_start <= a.start_date
+                    && request_offer.time_range_end >= a.end_date
+            });
 
         let mut filtered_offers = Vec::new();
 
@@ -496,10 +488,6 @@ impl DBManager {
         {
             let mut number_of_days_index_lock = self.number_of_days_index_lock.write().await;
             number_of_days_index_lock.clear();
-        }
-        {
-            let mut time_range_tree_lock = self.time_range_tree_lock.write().await;
-            time_range_tree_lock.clear();
         }
         Ok(())
     }
