@@ -132,7 +132,6 @@ dependencies = [
  "serde_urlencoded",
  "sonic-rs",
  "tokio",
- "url",
 ]
 
 [[package]]

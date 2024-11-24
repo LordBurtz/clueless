@@ -4,11 +4,8 @@ use crate::json_models::{
     SeatCount, SortOrder, VollKaskoCount,
 };
 use tokio::sync::RwLock;
-// use crate::tree_exp::DenseStore;
 use crate::region_hierarchy::{RegionTree, ROOT_REGION};
 use crate::GenericError;
-
-// #[derive(Clone)]
 pub struct DBManager {
     pub client: clickhouse::Client,
     pub region_tree_lock: RwLock<RegionTree>,
@@ -50,6 +47,7 @@ impl CarType {
 }
 
 impl DBManager {
+    // pub fn new(client: clickhouse::Client, region_tree: RegionTree, dense_store: DenseStore) -> Self {
     pub fn new(client: clickhouse::Client) -> Self {
         Self {
             client,
@@ -123,23 +121,6 @@ impl DBManager {
         &self,
         request_offer: RequestOffer,
     ) -> Result<GetReponseBodyModel, GenericError> {
-        // let query_string: String = "SELECT ?fields
-        // FROM offers
-        // JOIN region_hierarchy rh ON offers.most_specific_region_id = rh.descendant_id
-        // WHERE
-        //     rh.ancestor_id = ? AND
-        //     ? <= start_date AND
-        //     ? >= end_date AND
-        //     end_date - start_date = ?"
-        //     .to_string();
-
-        // let query = self
-        //     .client
-        //     .query(&query_string)
-        //     .bind(request_offer.region_id)
-        //     .bind(request_offer.time_range_start)
-        //     .bind(request_offer.time_range_end)
-        //     .bind(request_offer.number_days * 24 * 60 * 60 * 1000);
 
         let dense_store = self.dense_store_lock.read().await;
         let region_tree = self.region_tree_lock.read().await;
@@ -156,12 +137,6 @@ impl DBManager {
             .collect::<Vec<_>>()
             ;
 
-        //
-        //Results of db query
-        //
-        // let offers = query.fetch_all::<Offer>().await?;
-
-        // todo passt eig so
         if offers.is_empty() {
             return Ok(crate::json_models::GetReponseBodyModel {
                 offers: vec![],
@@ -242,46 +217,6 @@ impl DBManager {
             }
         }
 
-        // let filtered_offers_count = filtered_offers.len() as u32;
-
-        //
-        // Count vollkasko and car type options
-        //
-
-        // let vollkasko_count = match request_offer.only_vollkasko {
-        //     None => VollKaskoCount {
-        //         true_count: filtered_offers
-        //             .iter()
-        //             .filter(|offer| offer.has_vollkasko)
-        //             .count() as u32,
-        //         false_count: filtered_offers
-        //             .iter()
-        //             .filter(|offer| !offer.has_vollkasko)
-        //             .count() as u32,
-        //     },
-        //     Some(only_vollkasko) => VollKaskoCount {
-        //         true_count: filtered_offers_count
-        //             + if only_vollkasko {
-        //                 0
-        //             } else {
-        //                 has_vollkasko_filter_excl.len() as u32
-        //             },
-        //         false_count: filtered_offers_count
-        //             + if !only_vollkasko {
-        //                 0
-        //             } else {
-        //                 has_vollkasko_filter_excl.len() as u32
-        //             },
-        //     },
-        // };
-
-        // let car_type_count =
-            // Self::get_car_type_count(&offers, &car_type_filter_excl, &request_offer);
-
-        //
-        // price range slicing
-        //
-
         let price_range_bucket = Self::toPriceRangesOffers(
             filtered_offers
                 .iter()
@@ -290,17 +225,13 @@ impl DBManager {
             request_offer.price_range_width,
         );
 
-        //
-        // free kilometers slicing
-        //
-
         let vollkasko_count2 = Self::toVollkaskoOffers(
             filtered_offers
                 .iter()
                 .copied()
                 .chain(has_vollkasko_filter_excl),
         );
-        // let defsi = car_type_count;
+
         let car_type_count2 =
             Self::to_car_type_count(filtered_offers.iter().copied().chain(car_type_filter_excl));
 
@@ -590,23 +521,21 @@ impl DBManager {
     }
 
     pub async fn cleanup(&self) -> Result<(), GenericError> {
-        // self.client.query("TRUNCATE TABLE offers").execute().await?;
-        let mut dense_store = self.dense_store_lock.write().await;
-        dense_store.all.clear();
-        let mut region_tree = self.region_tree_lock.write().await;
-        region_tree.clear_offers();
+        self.client.query("TRUNCATE TABLE offers").execute().await?;
         Ok(())
     }
 }
 
-#[derive(Clone)]
 pub struct DenseStore {
     pub all: Vec<Offer>,
 }
 
-impl DenseStore {
-    pub fn new() -> Self {
-        Self { all: Vec::new() }
+impl  DenseStore {
+    pub fn new(
+    ) -> Self {
+        Self {
+            all: Vec::with_capacity(1 << 30),
+        }
     }
 
     pub fn insert(&mut self, offer: Offer) {

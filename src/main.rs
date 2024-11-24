@@ -243,7 +243,6 @@ async fn main() -> Result<()> {
         .with_url("http://localhost:8123")
         .with_user("default")
         .with_database("check24");
-
     let db_manager = Arc::new(DBManager::new(db_client));
     // db_manager.init().await?;
     let region_tree = RegionTree::populate_with_regions(&ROOT_REGION);
