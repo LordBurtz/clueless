@@ -242,7 +242,9 @@ async fn main() -> Result<()> {
     let db_manager = Arc::new(DBManager::new(db_client));
     db_manager.init().await?;
     let region_tree = RegionTree::populate_with_regions(&ROOT_REGION);
-    println!("{:?}", region_tree);
+    if cfg!(debug_assertions) {
+        println!("{:?}", region_tree);
+    }
 
     let addr: SocketAddr = "0.0.0.0:80".parse().unwrap();
 
