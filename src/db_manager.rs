@@ -377,52 +377,28 @@ impl DBManager {
         offers: impl Iterator<Item = &'a Offer>,
         price_range_width: u32,
     ) -> Vec<PriceRange> {
-        let mut vec_offers_price_range = offers.collect::<Vec<&Offer>>();
-        if vec_offers_price_range.is_empty() {
-            return vec![];
+        let mut interval_mapping = HashMap::new();
+
+        for offer in offers {
+            let lower_bound = (offer.price / price_range_width) * price_range_width;
+            interval_mapping
+                .entry(lower_bound)
+                .and_modify(|count| *count += 1)
+                .or_insert(1);
         }
 
-        vec_offers_price_range.sort_by(|a, b| a.price.cmp(&b.price));
-        let head = vec_offers_price_range.first().unwrap();
-
-        // magic number access,
-
-        // TODO: rename later
-        let mut lower_bound_free_km = (head.price / price_range_width) * price_range_width;
-
-        // let mut lower_bound_free_km =
-        //     first_km.free_kilometers + min_free_kilometer_width;
-
-        let mut km_vec_vec: Vec<PriceRange> = vec![]; // i literally do not care
-        km_vec_vec.push(crate::json_models::PriceRange {
-            start: lower_bound_free_km,
-            end: lower_bound_free_km + price_range_width,
-            count: 0,
-        });
-
-        for offer in vec_offers_price_range {
-            let PriceRange {
-                start: _,
-                end,
+        interval_mapping
+            .into_iter()
+            .map(|(lower_bound, count)| PriceRange {
+                start: lower_bound,
+                end: lower_bound + price_range_width,
                 count,
-            } = km_vec_vec.last_mut().unwrap();
-            if offer.price < *end {
-                *count += 1
-            } else {
-                // TODO: helper method
-                lower_bound_free_km = (offer.price / price_range_width) * price_range_width;
-                km_vec_vec.push(PriceRange {
-                    start: lower_bound_free_km,
-                    end: lower_bound_free_km + price_range_width,
-                    count: 1,
-                });
-            }
-        }
-
-        return km_vec_vec;
+            })
+            .collect()
     }
 
     pub fn to_seat_number_offers<'a>(offers: impl Iterator<Item = &'a Offer>) -> Vec<SeatCount> {
+        // todo: exchange with better suited data structure
         let mut count_map = HashMap::new();
 
         for offer in offers {
