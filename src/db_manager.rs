@@ -6,6 +6,7 @@ use crate::json_models::{
 use crate::number_of_days::NumberOfDaysIndex;
 use crate::region_hierarchy::{RegionTree, ROOT_REGION};
 use crate::GenericError;
+use gxhash::{HashMap, HashMapExt};
 use tokio::sync::RwLock;
 
 pub struct DBManager {
@@ -135,7 +136,7 @@ impl DBManager {
             }
         }
 
-        let price_range_bucket = Self::toPriceRangesOffers(
+        let price_range_bucket = Self::to_price_ranges_offers(
             filtered_offers
                 .iter()
                 .copied()
@@ -143,7 +144,7 @@ impl DBManager {
             request_offer.price_range_width,
         );
 
-        let vollkasko_count2 = Self::toVollkaskoOffers(
+        let vollkasko_count2 = Self::to_vollkasko_offers(
             filtered_offers
                 .iter()
                 .copied()
@@ -153,31 +154,31 @@ impl DBManager {
         let car_type_count2 =
             Self::to_car_type_count(filtered_offers.iter().copied().chain(car_type_filter_excl));
 
-        let listForIt = filtered_offers
+        let list_for_it = filtered_offers
             .iter()
             .copied()
             .chain(free_kilometers_filter_excl);
         let free_kilometer_bucket =
-            Self::toFreeKilometersOffers(listForIt, request_offer.min_free_kilometer_width);
+            Self::to_free_kilometers_offers(list_for_it, request_offer.min_free_kilometer_width);
 
         //
         // calculate seat count
         //
 
-        let seatCountVec =
-            Self::toSeatNumberOffers(filtered_offers.iter().copied().chain(seats_filter_excl));
+        let seat_count_vec =
+            Self::to_seat_number_offers(filtered_offers.iter().copied().chain(seats_filter_excl));
 
         //
         // Apply all optional filters, then paginate and return
         //
 
-        let paged_offers = Self::sortOrdersAndPaginate(filtered_offers, request_offer);
+        let paged_offers = Self::sort_orders_and_paginate(filtered_offers, request_offer);
 
         Ok(GetReponseBodyModel {
             offers: paged_offers,
             price_ranges: price_range_bucket,
             car_type_counts: car_type_count2,
-            seats_count: seatCountVec,
+            seats_count: seat_count_vec,
             free_kilometer_range: free_kilometer_bucket,
             vollkasko_count: vollkasko_count2,
         })
@@ -249,7 +250,7 @@ impl DBManager {
         }
     }
 
-    fn sortOrdersAndPaginate(
+    fn sort_orders_and_paginate(
         offers: Vec<&Offer>,
         request_offer: RequestOffer,
     ) -> Vec<ResponseOffer> {
@@ -286,7 +287,7 @@ impl DBManager {
             .collect()
     }
 
-    fn toFreeKilometersOffers<'a>(
+    fn to_free_kilometers_offers<'a>(
         offers: impl Iterator<Item = &'a Offer>,
         min_free_kilometer_width: u32,
     ) -> Vec<FreeKilometerRange> {
@@ -333,7 +334,7 @@ impl DBManager {
         return km_vec_vec;
     }
 
-    fn toVollkaskoOffers<'a>(offers: impl Iterator<Item = &'a Offer>) -> VollKaskoCount {
+    fn to_vollkasko_offers<'a>(offers: impl Iterator<Item = &'a Offer>) -> VollKaskoCount {
         // counts for vollkasko occurences
         let (mut true_count, mut false_count) = (0, 0);
 
@@ -372,7 +373,7 @@ impl DBManager {
         }
     }
 
-    pub fn toPriceRangesOffers<'a>(
+    pub fn to_price_ranges_offers<'a>(
         offers: impl Iterator<Item = &'a Offer>,
         price_range_width: u32,
     ) -> Vec<PriceRange> {
@@ -421,21 +422,23 @@ impl DBManager {
         return km_vec_vec;
     }
 
-    pub fn toSeatNumberOffers<'a>(offers: impl Iterator<Item = &'a Offer>) -> Vec<SeatCount> {
-        let mut vec_number_seats = offers.collect::<Vec<&Offer>>();
-        vec_number_seats.sort_by(|a, b| a.number_seats.cmp(&b.number_seats));
+    pub fn to_seat_number_offers<'a>(offers: impl Iterator<Item = &'a Offer>) -> Vec<SeatCount> {
+        let mut count_map = HashMap::new();
 
-        return vec_number_seats
-            .chunk_by(|a, b| a.number_seats == b.number_seats)
-            .map(|chunk| {
-                let number_seats = chunk.first().unwrap().number_seats;
-                let count = chunk.len() as u32;
-                SeatCount {
-                    number_seats,
-                    count,
-                }
+        for offer in offers {
+            count_map
+                .entry(offer.number_seats)
+                .and_modify(|count| *count += 1)
+                .or_insert(1);
+        }
+
+        count_map
+            .into_iter()
+            .map(|(number_seats, count)| SeatCount {
+                number_seats,
+                count,
             })
-            .collect::<Vec<SeatCount>>();
+            .collect()
     }
 
     pub async fn cleanup(&self) -> Result<(), GenericError> {
