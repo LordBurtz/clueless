@@ -2,25 +2,22 @@
 mod db_manager;
 mod db_models;
 mod json_models;
+mod number_of_days;
 mod region_hierarchy;
-// mod tree_exp;
 
 use json_models::*;
 
 use crate::db_manager::DBManager;
 use crate::region_hierarchy::{RegionTree, ROOT_REGION};
-use bytes::{Bytes};
+use bytes::Bytes;
 use futures::{StreamExt, TryStreamExt};
 use http_body_util::{BodyExt, Full};
-use hyper::body::{Incoming};
+use hyper::body::Incoming;
 use hyper::server::conn::http1;
-use hyper::service::{service_fn};
+use hyper::service::service_fn;
 use hyper::{body::Incoming as IncomingBody, header, Method, Request, Response, StatusCode};
 use hyper_util::rt::TokioIo;
-use sonic_rs::{
-    get_from_bytes_unchecked, to_array_iter_unchecked,
-    JsonValueTrait,
-};
+use sonic_rs::{get_from_bytes_unchecked, to_array_iter_unchecked, JsonValueTrait};
 use std::error::Error;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -52,9 +49,9 @@ async fn api_post_response(
         println!("Inserting offers");
     }
 
-
     let mut dense_store = manager.dense_store_lock.write().await;
     let mut region_tree = manager.region_tree_lock.write().await;
+    let mut number_of_days_index = manager.number_of_days_index_lock.write().await;
 
     // let data_store = manager.dense_store_lock.get_mut().awa;
     for elem in iter {
@@ -117,7 +114,9 @@ async fn api_post_response(
                     "family" => db_models::CarType::Family,
                     _ => return Err("Invalid car type".into()),
                 };
+                let idx = dense_store.all.len() as u32;
                 let offer = db_models::Offer {
+                    idx,
                     id,
                     data,
                     most_specific_region_id,
@@ -132,9 +131,10 @@ async fn api_post_response(
 
                 // Write each offer to the database
                 // insert.write(&offer).await?;
-                let len = dense_store.all.len() as u32;
+
                 dense_store.all.push(offer);
-                region_tree.insert_offer(most_specific_region_id as u8,len);
+                region_tree.insert_offer(most_specific_region_id as u8, idx);
+                number_of_days_index.index_offer(&dense_store.all[idx as usize]);
             }
             Err(err) => {
                 // Handle parsing errors

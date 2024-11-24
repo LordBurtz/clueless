@@ -8,7 +8,7 @@ pub struct RequestOffer {
     pub region_id: u8,
     pub time_range_start: u64,
     pub time_range_end: u64,
-    pub number_days: i32,
+    pub number_days: u32,
     pub sort_order: SortOrder,
     pub page: u32,
     pub page_size: u32,

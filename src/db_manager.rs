@@ -1,14 +1,17 @@
-use crate::db_models::{CarType, Offer, RegionHierarchy};
+use crate::db_models::{CarType, Offer};
 use crate::json_models::{
     CarTypeCount, FreeKilometerRange, GetReponseBodyModel, PriceRange, RequestOffer, ResponseOffer,
     SeatCount, SortOrder, VollKaskoCount,
 };
-use tokio::sync::RwLock;
+use crate::number_of_days::NumberOfDaysIndex;
 use crate::region_hierarchy::{RegionTree, ROOT_REGION};
 use crate::GenericError;
+use tokio::sync::RwLock;
+
 pub struct DBManager {
     pub region_tree_lock: RwLock<RegionTree>,
     pub dense_store_lock: RwLock<DenseStore>,
+    pub number_of_days_index_lock: RwLock<NumberOfDaysIndex>,
 }
 
 impl CarType {
@@ -28,6 +31,7 @@ impl DBManager {
         Self {
             region_tree_lock: RegionTree::populate_with_regions(&ROOT_REGION).into(),
             dense_store_lock: DenseStore::new().into(),
+            number_of_days_index_lock: NumberOfDaysIndex::new().into(),
         }
     }
 
@@ -35,21 +39,21 @@ impl DBManager {
         &self,
         request_offer: RequestOffer,
     ) -> Result<GetReponseBodyModel, GenericError> {
-
         let dense_store = self.dense_store_lock.read().await;
         let region_tree = self.region_tree_lock.read().await;
+        let number_of_days_index = self.number_of_days_index_lock.read().await;
 
-        let offers = region_tree.get_available_offers(request_offer.region_id)
-            .map(|offer_idx| {
-                &dense_store.all[offer_idx as usize]
-            })
+        let offers = number_of_days_index
+            .filter_offers(
+                request_offer.number_days,
+                region_tree.get_available_offers(request_offer.region_id),
+            )
+            .map(|offer_idx| &dense_store.all[offer_idx as usize])
             .filter(|a| {
-            (a.end_date - a.start_date) == (request_offer.number_days * 24 * 60 * 60 * 1000) as u64
-            && request_offer.time_range_start <= a.start_date
-            && request_offer.time_range_end >= a.end_date
+                request_offer.time_range_start <= a.start_date
+                    && request_offer.time_range_end >= a.end_date
             })
-            .collect::<Vec<_>>()
-            ;
+            .collect::<Vec<_>>();
 
         if offers.is_empty() {
             return Ok(crate::json_models::GetReponseBodyModel {
@@ -443,6 +447,10 @@ impl DBManager {
             let mut dense_store_lock = self.dense_store_lock.write().await;
             dense_store_lock.all.clear();
         }
+        {
+            let mut number_of_days_index_lock = self.number_of_days_index_lock.write().await;
+            number_of_days_index_lock.clear();
+        }
         Ok(())
     }
 }
@@ -451,9 +459,8 @@ pub struct DenseStore {
     pub all: Vec<Offer>,
 }
 
-impl  DenseStore {
-    pub fn new(
-    ) -> Self {
+impl DenseStore {
+    pub fn new() -> Self {
         Self {
             all: Vec::with_capacity(1 << 25),
         }

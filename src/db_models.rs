@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Offer {
+    pub idx: u32,
     pub id: String,
     // TODO: optimize?
     pub data: String, // base64 encoded 256 Byte array
