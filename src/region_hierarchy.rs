@@ -4,13 +4,31 @@ use crate::GenericError;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde_json::json;
+use std::collections::{HashMap};
+
+#[derive(Default)]
+struct RegionTreeElement {
+  offers: Vec<u32>,
+  subRegions: Vec<u32>,
+}
+
+struct RegionTree {
+  regions: Vec<RegionTreeElement>,
+}
+
+impl RegionTree {
+  pub fn insert_offer(offer_idx: u32, region_id: u32) {
+    regions.insert();
+  }
+}
 
 #[derive(Deserialize, Clone)]
 struct Region {
     id: u32,
-    name: String,
     subregions: Vec<Region>,
 }
+
+
 pub async fn populate_region_hierarchy(manager: &DBManager) -> Result<(), GenericError> {
     manager.delete_region_hierarchy().await?;
     let path = vec![&*ROOT_REGION];

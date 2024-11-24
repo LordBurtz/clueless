@@ -1,79 +1,87 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, BTreeMap, VecDeque};
+
+use slotmap::{DenseSlotMap, SecondaryMap, SlotMap};
+
+#[derive(Clone)]
+pub struct DenseStore<'a> {
+    pub all: Vec<Offer<'a>>,
+}
+
+impl DenseStore<'_> {
+    pub fn new() -> Self {
+        Self { all: Vec::new() }
+    }
+
+    pub fn insert(&mut self, offer: Offer) {
+        self.all.push(offer);
+    }
+}
+
+impl DenseStore<'_> {
+    fn new() -> Self {
+        DenseStore {
+            map: Default::default(),
+        }
+    }
+
+    fn insert(&mut self, key: usize, value: usize) {
+
+    }
+}
 
 use crate::json_models::{
     Offer
 };
 
-struct RegionNode<'a> {
-    id: u32,
-    left_subregion: Option<Box<RegionNode<'a>>>,
-    right_subregion: Option<Box<RegionNode<'a>>>,
-    nodes: &'a mut Vec<Offer>,
-}
-
-
-
-pub fn build_region_tree() -> RegionNode {
-    RegionNode {
-        id: 0,
-        left_subregion: None,
-        right_subregion: None,
-        nodes: Vec::new().as_mut(),
-    }
-}
-
-pub fn build_node(id: u32) -> Option<Box<RegionNode>> {
-    Some(Box::new(RegionNode {
-        id,
-        left_subregion: None,
-        right_subregion: None,
-        nodes: Vec::new().as_mut(),
-    }))
-}
-
-pub fn getTree() -> OctTree<Offer, OctVec> {
-    OctTree::with_capacity(117, 117)
-}
-
-
-
-
-
-
 #[derive(Debug)]
-struct TreeNode {
+struct TreeNode<'a> {
     id: u32,
-    value: Vec<Offer>,
-    children: Vec<TreeNode>, // IDs of child nodes
+    value: Vec<Offer<'a>>,
+    children: Vec<TreeNode<'a>>, // IDs of child nodes
 }
 
-#[derive(Debug)]
-struct Tree {
-    nodes: HashMap<u32, TreeNode>, // Map of node ID to TreeNode
-}
-
-impl TreeNode {
+impl TreeNode<'_> {
     fn get_children_values(&self) -> Vec<&Offer> {
         let mut result = &self.children
-                .iter()
-                .map(|node| node.get_children_values())
-                .collect::<Vec<&Offer>>();
+            .iter()
+            .map(|node| node.get_children_values())
+            .collect::<Vec<&Offer>>();
 
         result.append(&self.value)
     }
 }
 
-impl Tree {
+
+#[derive(Debug)]
+struct Tree<'a> {
+    root: TreeNode<'a>,
+    nodes: HashMap<u32, TreeNode<'a>>, // Map of node ID to TreeNode
+}
+
+impl Tree<'_> {
     // Create a new empty tree
     fn new() -> Self {
         Tree {
+            root: TreeNode {
+                id: 0,
+                value: vec![],
+                children: vec![],
+            },
             nodes: HashMap::new(),
         }
+    }
+
+    fn insert_offer(&mut self, offer: Offer) {
+        let node = self.nodes.get(&offer.most_specific_region_ID).unwrap();
+        node.value.push(offer);
+
     }
 
     fn get_node(&self, id: &u32) -> Option<&TreeNode> {
         self.nodes.get(id)
     }
+
+    //fn get_node_anywhere(&self, id : &u32) -> Option<&TreeNode>
 
     fn get_children_values(&self, id: &u32) -> Vec<&Offer> {
         if let Some(node) = self.nodes.get(id) {
@@ -97,21 +105,23 @@ impl Tree {
         None
     }
 
-    fn add_node(&mut self, id: u32, value: Vec<Offer>, parent_id: Option<&str>) {
+    fn add_node(&mut self, id: u32, value: Vec<Offer>, parent_id: Option<&u32>) {
         let node = TreeNode {
-            id: id.to_string(),
-            value: value.to_string(),
+            id,
+            value,
             children: Vec::new(),
         };
 
-        self.nodes.insert(id.to_string(), node);
+        self.nodes.insert(id, node);
 
         if let Some(parent_id) = parent_id {
             if let Some(parent_node) = self.nodes.get_mut(parent_id) {
-                parent_node.children.push(id.to_string());
+                parent_node.children.push(self.nodes.get(&id).ok_or(0)?);
             } else {
                 eprintln!("Parent ID '{}' not found!", parent_id);
             }
         }
     }
+
+
 }

@@ -1,11 +1,10 @@
 use crate::db_models::{CarType, Offer, RegionHierarchy};
-use crate::json_models::*;
 use crate::json_models::{
     CarTypeCount, FreeKilometerRange, GetReponseBodyModel, PriceRange,
     RequestOffer, ResponseOffer, SeatCount, SortOrder, VollKaskoCount,
 };
+use crate::tree_exp::DenseStore;
 use crate::GenericError;
-use clickhouse::sql::Bind;
 
 #[derive(Clone)]
 pub struct DBManager {
@@ -126,7 +125,7 @@ impl DBManager {
             end_date - start_date = ?"
             .to_string();
 
-        let mut query = self
+        let query = self
             .client
             .query(&query_string)
             .bind(request_offer.region_id)
@@ -134,6 +133,13 @@ impl DBManager {
             .bind(request_offer.time_range_end)
             .bind(request_offer.number_days * 24 * 60 * 60 * 1000);
 
+
+        let second_store = DenseStore::new();
+
+        let second_offers = second_store.all.iter().filter(|a| {
+            request_offer.time_range_start <= a.start_date && request_offer.time_range_end >= a.end_date &&
+                (a.end_date - a.start_date) == (request_offer.number_days * 24 * 60 * 60 * 1000) as u64
+        });
 
         //
         //Results of db query
@@ -195,7 +201,7 @@ impl DBManager {
                 }
             }
             if let Some(maxPrice) = request_offer.max_price {
-                if (maxPrice <= offer.price) {
+                if maxPrice <= offer.price {
                     price_range_incl = false;
                 }
             }
@@ -277,7 +283,7 @@ impl DBManager {
         let car_type_count2 = Self::to_car_type_count(filtered_offers.iter().copied().chain(car_type_filter_excl));
 
 
-        let listForIt = (filtered_offers.iter().copied().chain(free_kilometers_filter_excl));
+        let listForIt = filtered_offers.iter().copied().chain(free_kilometers_filter_excl);
         let free_kilometer_bucket = Self::toFreeKilometersOffers(
             listForIt,
             request_offer.min_free_kilometer_width,
@@ -348,7 +354,7 @@ impl DBManager {
                     };
                 }
                 CarTypeCount {
-                    small: if (CarType::Small.eqMe(&filtered_car_type)) {
+                    small: if CarType::Small.eqMe(&filtered_car_type) {
                         filtered_offers_count
                     } else {
                         small_excluded
@@ -477,7 +483,7 @@ impl DBManager {
         let (mut small, mut sports, mut luxury, mut family) = (0, 0, 0, 0);
 
         for offer in offers {
-            match (offer.car_type) {
+            match offer.car_type {
                 CarType::Small => small += 1,
                 CarType::Sports => sports += 1,
                 CarType::Luxury => luxury += 1,
@@ -519,7 +525,7 @@ impl DBManager {
         });
 
         for offer in vec_offers_price_range {
-            let PriceRange { start, end, count } = km_vec_vec.last_mut().unwrap();
+            let PriceRange { _, end, count } = km_vec_vec.last_mut().unwrap();
             if offer.price < *end {
                 *count += 1
             } else {
