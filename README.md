@@ -18,7 +18,8 @@ Managing to get to number 1 and be in the top 3
 ## What we learned
 optimising our code
 
-## What's next for clueless - check24
+## What's next for clueless
 find some clues
 gotta go faster
 build a frontend
+bump allocator maybe?
