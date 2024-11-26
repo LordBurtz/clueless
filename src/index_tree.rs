@@ -3,11 +3,17 @@ use fxhash::FxHashMap;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde_json::json;
-use std::collections::BTreeMap;
 
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Debug)]
+struct IndexTreeOffer {
+    start_date: u64,
+    end_date: u64,
+    idx: u32,
+}
+
+#[derive(Default, Debug)]
 struct IndexTreeElement {
-    offers: FxHashMap<u32, BTreeMap<u64, u32>>,
+    offers: FxHashMap<u32, Vec<IndexTreeOffer>>,
     sub_regions: Option<Vec<u8>>,
 }
 
@@ -19,7 +25,10 @@ pub struct IndexTree {
 impl IndexTree {
     pub fn populate_with_regions(root: &Region) -> IndexTree {
         let mut tree = IndexTree::default();
-        tree.regions = vec![IndexTreeElement::default(); 125];
+        tree.regions = Vec::with_capacity(125);
+        for _ in 0..125 {
+            tree.regions.push(IndexTreeElement::default());
+        }
         tree.populate_with_regions_recursive(root);
         tree
     }
@@ -47,11 +56,16 @@ impl IndexTree {
             while let Some(current_region_id) = stack.pop() {
                 let region = &self.regions[current_region_id as usize];
 
-                if let Some(offer_map) = region.offers.get(&number_of_days) {
-                    let offer_iter = offer_map
-                        .range(time_range_start..)
-                        .filter(move |(end, _)| **end <= time_range_end)
-                        .map(|(_, value)| *value);
+                if let Some(offers) = region.offers.get(&number_of_days) {
+                    let start_idx = offers
+                        .binary_search_by_key(&time_range_start, |offer| offer.start_date)
+                        .unwrap_or_else(|x| x);
+
+                    let offer_iter = offers[start_idx..]
+                        .iter()
+                        .take_while(move |offer| offer.start_date <= time_range_end)
+                        .filter(move |offer| offer.end_date <= time_range_end)
+                        .map(|offer| offer.idx);
 
                     if let Some(sub_regions) = &region.sub_regions {
                         stack.extend(sub_regions.iter().copied());
@@ -73,17 +87,21 @@ impl IndexTree {
     }
 
     pub fn insert_offer(&mut self, region_id: u8, offer: &Offer) {
+        let offer = IndexTreeOffer {
+            start_date: offer.start_date,
+            end_date: offer.end_date,
+            idx: offer.idx,
+        };
         self.regions[region_id as usize]
             .offers
             .entry(((offer.end_date - offer.start_date) / (1000 * 60 * 60 * 24)) as u32)
             .and_modify(|v| {
-                v.insert(offer.start_date, offer.idx);
+                let idx = v
+                    .binary_search_by_key(&offer.start_date, |offer| offer.start_date)
+                    .unwrap_or_else(|x| x);
+                v.insert(idx, offer);
             })
-            .or_insert_with(|| {
-                let mut map = BTreeMap::new();
-                map.insert(offer.start_date, offer.idx);
-                map
-            });
+            .or_insert_with(|| vec![offer]);
     }
 }
 
