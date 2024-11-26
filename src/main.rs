@@ -48,7 +48,7 @@ async fn api_post_response(
     }
 
     let mut dense_store = manager.dense_store_lock.write().await;
-    let mut region_tree = manager.region_tree_lock.write().await;
+    let mut region_tree = manager.index_tree_lock.write().await;
 
     // let data_store = manager.dense_store_lock.get_mut().awa;
     for elem in iter {

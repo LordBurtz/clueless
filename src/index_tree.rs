@@ -61,14 +61,8 @@ impl IndexTree {
                 }
 
                 if let Some(offers) = region.offers.get(&number_of_days) {
-                    let start_idx = offers
-                        .binary_search_by(|offer| {
-                            offer
-                                .start_date
-                                .cmp(&time_range_start)
-                                .then(std::cmp::Ordering::Greater)
-                        })
-                        .unwrap_or_else(|x| x);
+                    let start_idx =
+                        offers.partition_point(|offer| offer.start_date < time_range_start);
 
                     let offer_iter = offers[start_idx..]
                         .iter()

@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use tokio::sync::RwLock;
 
 pub struct DBManager {
-    pub region_tree_lock: RwLock<IndexTree>,
+    pub index_tree_lock: RwLock<IndexTree>,
     pub dense_store_lock: RwLock<DenseStore>,
 }
 
@@ -31,7 +31,7 @@ impl CarType {
 impl DBManager {
     pub fn new() -> Self {
         Self {
-            region_tree_lock: IndexTree::populate_with_regions(&ROOT_REGION).into(),
+            index_tree_lock: IndexTree::populate_with_regions(&ROOT_REGION).into(),
             dense_store_lock: DenseStore::new().into(),
         }
     }
@@ -41,7 +41,7 @@ impl DBManager {
         request_offer: RequestOffer,
     ) -> Result<GetReponseBodyModel, GenericError> {
         let dense_store = self.dense_store_lock.read().await;
-        let index_tree = self.region_tree_lock.read().await;
+        let index_tree = self.index_tree_lock.read().await;
         let offers = index_tree
             .get_available_offers(
                 request_offer.region_id,
@@ -470,7 +470,7 @@ impl DBManager {
 
     pub async fn cleanup(&self) -> Result<(), GenericError> {
         {
-            let mut region_tree_lock = self.region_tree_lock.write().await;
+            let mut region_tree_lock = self.index_tree_lock.write().await;
             region_tree_lock.clear_offers();
         }
         {
