@@ -56,6 +56,10 @@ impl IndexTree {
             while let Some(current_region_id) = stack.pop() {
                 let region = &self.regions[current_region_id as usize];
 
+                if let Some(sub_regions) = &region.sub_regions {
+                    stack.extend(sub_regions.iter().copied());
+                }
+
                 if let Some(offers) = region.offers.get(&number_of_days) {
                     let start_idx = offers
                         .binary_search_by_key(&time_range_start, |offer| offer.start_date)
@@ -66,10 +70,6 @@ impl IndexTree {
                         .take_while(move |offer| offer.start_date <= time_range_end)
                         .filter(move |offer| offer.end_date <= time_range_end)
                         .map(|offer| offer.idx);
-
-                    if let Some(sub_regions) = &region.sub_regions {
-                        stack.extend(sub_regions.iter().copied());
-                    }
 
                     return Some(offer_iter);
                 }
