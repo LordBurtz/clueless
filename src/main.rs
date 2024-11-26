@@ -9,7 +9,7 @@ mod region_hierarchy;
 use json_models::*;
 
 use crate::db_manager::DBManager;
-use crate::region_hierarchy::{RegionTree, ROOT_REGION};
+use crate::region_hierarchy::{IndexTree, ROOT_REGION};
 use bytes::Bytes;
 use futures::{StreamExt, TryStreamExt};
 use http_body_util::{BodyExt, Full};
@@ -50,7 +50,6 @@ async fn api_post_response(
 
     let mut dense_store = manager.dense_store_lock.write().await;
     let mut region_tree = manager.region_tree_lock.write().await;
-    let mut number_of_days_index = manager.number_of_days_index_lock.write().await;
 
     // let data_store = manager.dense_store_lock.get_mut().awa;
     for elem in iter {
@@ -128,9 +127,8 @@ async fn api_post_response(
                     free_kilometers,
                 };
 
+                region_tree.insert_offer(most_specific_region_id as u8, &offer);
                 dense_store.all.push(offer);
-                region_tree.insert_offer(most_specific_region_id as u8, idx);
-                number_of_days_index.index_offer(&dense_store.all[idx as usize]);
             }
             Err(err) => {
                 // Handle parsing errors
@@ -221,7 +219,7 @@ fn full<T: Into<Bytes>>(chunk: T) -> BoxBody {
 async fn main() -> Result<()> {
     let db_manager = Arc::new(DBManager::new());
     // db_manager.init().await?;
-    let region_tree = RegionTree::populate_with_regions(&ROOT_REGION);
+    let region_tree = IndexTree::populate_with_regions(&ROOT_REGION);
     if cfg!(debug_assertions) {
         println!("{:?}", region_tree);
     }

@@ -4,7 +4,7 @@ use crate::json_models::{
     SeatCount, SortOrder, VollKaskoCount,
 };
 use crate::number_of_days::NumberOfDaysIndex;
-use crate::region_hierarchy::{RegionTree, ROOT_REGION};
+use crate::region_hierarchy::{IndexTree, ROOT_REGION};
 use crate::GenericError;
 use fxhash::{FxBuildHasher, FxHashMap};
 use gxhash::HashMapExt;
@@ -13,9 +13,8 @@ use std::collections::HashMap;
 use tokio::sync::RwLock;
 
 pub struct DBManager {
-    pub region_tree_lock: RwLock<RegionTree>,
+    pub region_tree_lock: RwLock<IndexTree>,
     pub dense_store_lock: RwLock<DenseStore>,
-    pub number_of_days_index_lock: RwLock<NumberOfDaysIndex>,
 }
 
 impl CarType {
@@ -33,9 +32,8 @@ impl CarType {
 impl DBManager {
     pub fn new() -> Self {
         Self {
-            region_tree_lock: RegionTree::populate_with_regions(&ROOT_REGION).into(),
+            region_tree_lock: IndexTree::populate_with_regions(&ROOT_REGION).into(),
             dense_store_lock: DenseStore::new().into(),
-            number_of_days_index_lock: NumberOfDaysIndex::new().into(),
         }
     }
 
@@ -44,13 +42,8 @@ impl DBManager {
         request_offer: RequestOffer,
     ) -> Result<GetReponseBodyModel, GenericError> {
         let dense_store = self.dense_store_lock.read().await;
-        let region_tree = self.region_tree_lock.read().await;
-        let number_of_days_index = self.number_of_days_index_lock.read().await;
-        let mut offers = number_of_days_index
-            .filter_offers(
-                request_offer.number_days,
-                region_tree.get_available_offers(request_offer.region_id),
-            )
+        let index_tree = self.region_tree_lock.read().await;
+        let mut offers = index_tree.get_available_offers(request_offer.region_id, request_offer.number_days)
             .map(|offer_idx| &dense_store.all[offer_idx as usize])
             .filter(|a| {
                 // request_offer.number_days == ((a.end_date - a.start_date) / (1000 * 60 * 60 * 24)) as u32
@@ -484,10 +477,6 @@ impl DBManager {
         {
             let mut dense_store_lock = self.dense_store_lock.write().await;
             dense_store_lock.all.clear();
-        }
-        {
-            let mut number_of_days_index_lock = self.number_of_days_index_lock.write().await;
-            number_of_days_index_lock.clear();
         }
         Ok(())
     }
