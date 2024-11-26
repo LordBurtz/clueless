@@ -62,7 +62,12 @@ impl IndexTree {
 
                 if let Some(offers) = region.offers.get(&number_of_days) {
                     let start_idx = offers
-                        .binary_search_by_key(&time_range_start, |offer| offer.start_date)
+                        .binary_search_by(|offer| {
+                            offer
+                                .start_date
+                                .cmp(&time_range_start)
+                                .then(std::cmp::Ordering::Greater)
+                        })
                         .unwrap_or_else(|x| x);
 
                     let offer_iter = offers[start_idx..]
@@ -113,37 +118,125 @@ impl IndexTree {
     }
 }
 
-// #[cfg(test)]
-// mod test {
-//     #[test]
-//     fn it_should_work() {
-//         let root = super::ROOT_REGION.clone();
-//         let mut tree = super::IndexTree::populate_with_regions(&root);
-//         assert_eq!(
-//             tree.get_available_offers(0).collect::<Vec<_>>(),
-//             Vec::<u32>::new()
-//         );
-//
-//         tree.insert_offer(0, 1);
-//         tree.insert_offer(1, 2);
-//         tree.insert_offer(2, 3);
-//         tree.insert_offer(3, 4);
-//         tree.insert_offer(4, 5);
-//
-//         assert_eq!(
-//             tree.get_available_offers(0).collect::<Vec<_>>(),
-//             vec![1, 2, 3, 4, 5]
-//         );
-//         assert_eq!(tree.get_available_offers(1).collect::<Vec<_>>(), vec![2]);
-//         assert_eq!(tree.get_available_offers(2).collect::<Vec<_>>(), vec![3]);
-//         assert_eq!(tree.get_available_offers(3).collect::<Vec<_>>(), vec![4]);
-//         assert_eq!(tree.get_available_offers(4).collect::<Vec<_>>(), vec![5]);
-//         assert_eq!(
-//             tree.get_available_offers(5).collect::<Vec<_>>(),
-//             Vec::<u32>::new()
-//         );
-//     }
-// }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db_models::CarType;
+
+    fn get_offer(start_date: u64, end_date: u64, idx: u32) -> Offer {
+        Offer {
+            start_date,
+            end_date,
+            number_seats: 0,
+            price: 0,
+            car_type: CarType::Small,
+            has_vollkasko: false,
+            idx,
+            id: "".to_string(),
+            data: "".to_string(),
+            most_specific_region_id: 0,
+            free_kilometers: 0,
+        }
+    }
+
+    #[test]
+    fn test_fully_inclusive_time_range() {
+        let mut tree = IndexTree::populate_with_regions(&ROOT_REGION);
+
+        // Insert offers into region 0
+        tree.insert_offer(0, &get_offer(10, 15, 1));
+        tree.insert_offer(0, &get_offer(15, 20, 2));
+        tree.insert_offer(0, &get_offer(20, 25, 3));
+
+        let results: Vec<u32> = tree.get_available_offers(0, 0, 10, 20).collect();
+
+        assert_eq!(results, vec![1, 2]); // Fully inclusive offers
+    }
+
+    #[test]
+    fn test_partial_overlap_exclusion() {
+        let mut tree = IndexTree::populate_with_regions(&ROOT_REGION);
+        // Insert offers into region 0
+        tree.insert_offer(0, &get_offer(10, 15, 1));
+        tree.insert_offer(0, &get_offer(15, 20, 2));
+        tree.insert_offer(0, &get_offer(20, 25, 3));
+
+        let results: Vec<u32> = tree.get_available_offers(0, 0, 15, 25).collect();
+
+        assert_eq!(results, vec![2, 3]); // Fully contained offers
+    }
+
+    #[test]
+    fn test_edge_inclusion() {
+        let mut tree = IndexTree::populate_with_regions(&ROOT_REGION);
+        // Insert offers into region 0
+        tree.insert_offer(0, &get_offer(10, 15, 1));
+        tree.insert_offer(0, &get_offer(15, 20, 2));
+        tree.insert_offer(0, &get_offer(20, 25, 3));
+
+        let results: Vec<u32> = tree.get_available_offers(0, 0, 20, 25).collect();
+
+        assert_eq!(results, vec![3]); // Fully inclusive edge case
+    }
+
+    #[test]
+    fn test_no_matches() {
+        let mut tree = IndexTree::populate_with_regions(&ROOT_REGION);
+        // Insert offers into region 0
+        tree.insert_offer(0, &get_offer(10, 15, 1));
+        tree.insert_offer(0, &get_offer(15, 20, 2));
+        tree.insert_offer(0, &get_offer(20, 25, 3));
+
+        let results: Vec<u32> = tree.get_available_offers(0, 0, 25, 35).collect();
+
+        assert!(results.is_empty()); // No matches
+    }
+
+    #[test]
+    fn test_nested_regions() {
+        let mut tree = IndexTree::populate_with_regions(&ROOT_REGION);
+
+        // Insert offers into regions 0, 1, and 2
+        tree.insert_offer(0, &get_offer(10, 15, 1));
+        tree.insert_offer(0, &get_offer(5, 10, 0));
+        tree.insert_offer(1, &get_offer(15, 20, 2));
+        tree.insert_offer(2, &get_offer(20, 25, 3));
+
+        let mut results: Vec<u32> = tree.get_available_offers(0, 0, 10, 25).collect();
+
+        results.sort();
+        assert_eq!(results, vec![1, 2, 3]); // Offers from all nested regions
+    }
+
+    #[test]
+    fn test_multiple_same_start_times() {
+        let mut tree = IndexTree::populate_with_regions(&ROOT_REGION);
+
+        // Insert offers into region 0
+        tree.insert_offer(0, &get_offer(10, 15, 1));
+        tree.insert_offer(0, &get_offer(10, 20, 2));
+        tree.insert_offer(0, &get_offer(10, 25, 3));
+
+        let mut results: Vec<u32> = tree.get_available_offers(0, 0, 10, 20).collect();
+
+        results.sort();
+        assert_eq!(results, vec![1, 2]); // Offers with same start time
+    }
+
+    #[test]
+    fn time_range_start_does_not_occurr_directly_in_inserted_offers() {
+        let mut tree = IndexTree::populate_with_regions(&ROOT_REGION);
+
+        // Insert offers into region 0
+        tree.insert_offer(0, &get_offer(10, 15, 1));
+        tree.insert_offer(0, &get_offer(15, 20, 2));
+        tree.insert_offer(0, &get_offer(20, 25, 3));
+
+        let results: Vec<u32> = tree.get_available_offers(0, 0, 11, 20).collect();
+
+        assert_eq!(results, vec![2]); // Offers with same start time
+    }
+}
 
 #[derive(Deserialize, Clone)]
 pub struct Region {
