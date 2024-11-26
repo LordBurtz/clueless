@@ -3,14 +3,15 @@ use fxhash::FxHashMap;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde_json::json;
+use std::collections::BTreeMap;
 
 #[derive(Default, Clone, Debug)]
 struct IndexTreeElement {
-    offers: FxHashMap<u32, Vec<u32>>,
+    offers: FxHashMap<u32, BTreeMap<u64, u32>>,
     sub_regions: Option<Vec<u8>>,
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug)]
 pub struct IndexTree {
     regions: Vec<IndexTreeElement>,
 }
@@ -33,8 +34,36 @@ impl IndexTree {
         }
     }
 
-    pub fn get_available_offers(&self, region_id: u8, number_of_days: u32) -> impl Iterator<Item = u32> + '_ {
-        self.get_available_offers_recursive(region_id, number_of_days)
+    pub fn get_available_offers(
+        &self,
+        region_id: u8,
+        number_of_days: u32,
+        time_range_start: u64,
+        time_range_end: u64,
+    ) -> impl Iterator<Item = u32> + '_ {
+        let mut stack = vec![region_id];
+
+        std::iter::from_fn(move || {
+            while let Some(current_region_id) = stack.pop() {
+                let region = &self.regions[current_region_id as usize];
+
+                if let Some(offer_map) = region.offers.get(&number_of_days) {
+                    let offer_iter = offer_map
+                        .range(time_range_start..)
+                        .filter(move |(end, _)| **end < time_range_end)
+                        .map(|(_, value)| *value);
+
+                    if let Some(sub_regions) = &region.sub_regions {
+                        stack.extend(sub_regions.iter().copied());
+                    }
+
+                    return Some(offer_iter);
+                }
+            }
+
+            None
+        })
+        .flatten()
     }
 
     pub fn clear_offers(&mut self) {
@@ -43,24 +72,18 @@ impl IndexTree {
         }
     }
 
-    fn get_available_offers_recursive(&self, region_id: u8, number_of_days: u32) -> Box<dyn Iterator<Item = u32> + '_> {
-        let current_offers = self.regions[region_id as usize].offers.get(&number_of_days).into_iter().flat_map(|v| v.iter().copied());
-
-        let sub_region_offers = self.regions[region_id as usize]
-            .sub_regions
-            .iter()
-            .flatten()
-            .flat_map(move |&sub_region_id| self.get_available_offers_recursive(sub_region_id, number_of_days));
-
-        Box::new(current_offers.chain(sub_region_offers))
-    }
-
     pub fn insert_offer(&mut self, region_id: u8, offer: &Offer) {
         self.regions[region_id as usize]
             .offers
             .entry(((offer.end_date - offer.start_date) / (1000 * 60 * 60 * 24)) as u32)
-            .and_modify(|v| v.push(offer.idx))
-            .or_insert_with(|| vec![offer.idx]);
+            .and_modify(|v| {
+                v.insert(offer.start_date, offer.idx);
+            })
+            .or_insert_with(|| {
+                let mut map = BTreeMap::new();
+                map.insert(offer.start_date, offer.idx);
+                map
+            });
     }
 }
 

@@ -1,10 +1,9 @@
 use crate::db_models::{CarType, Offer};
+use crate::index_tree::{IndexTree, ROOT_REGION};
 use crate::json_models::{
     CarTypeCount, FreeKilometerRange, GetReponseBodyModel, PriceRange, RequestOffer, ResponseOffer,
     SeatCount, SortOrder, VollKaskoCount,
 };
-use crate::number_of_days::NumberOfDaysIndex;
-use crate::region_hierarchy::{IndexTree, ROOT_REGION};
 use crate::GenericError;
 use fxhash::{FxBuildHasher, FxHashMap};
 use gxhash::HashMapExt;
@@ -43,14 +42,14 @@ impl DBManager {
     ) -> Result<GetReponseBodyModel, GenericError> {
         let dense_store = self.dense_store_lock.read().await;
         let index_tree = self.region_tree_lock.read().await;
-        let mut offers = index_tree.get_available_offers(request_offer.region_id, request_offer.number_days)
-            .map(|offer_idx| &dense_store.all[offer_idx as usize])
-            .filter(|a| {
-                // request_offer.number_days == ((a.end_date - a.start_date) / (1000 * 60 * 60 * 24)) as u32
-                //     &&
-                request_offer.time_range_start <= a.start_date
-                    && request_offer.time_range_end >= a.end_date
-            });
+        let mut offers = index_tree
+            .get_available_offers(
+                request_offer.region_id,
+                request_offer.number_days,
+                request_offer.time_range_start,
+                request_offer.time_range_end,
+            )
+            .map(|offer_idx| &dense_store.all[offer_idx as usize]);
 
         let mut filtered_offers = Vec::new();
 

@@ -3,13 +3,12 @@
 mod db_manager;
 mod db_models;
 mod json_models;
-mod number_of_days;
-mod region_hierarchy;
+mod index_tree;
 
 use json_models::*;
 
 use crate::db_manager::DBManager;
-use crate::region_hierarchy::{IndexTree, ROOT_REGION};
+use crate::index_tree::{IndexTree, ROOT_REGION};
 use bytes::Bytes;
 use futures::{StreamExt, TryStreamExt};
 use http_body_util::{BodyExt, Full};
