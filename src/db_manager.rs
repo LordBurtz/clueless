@@ -42,7 +42,7 @@ impl DBManager {
     ) -> Result<GetReponseBodyModel, GenericError> {
         let dense_store = self.dense_store_lock.read().await;
         let index_tree = self.region_tree_lock.read().await;
-        let mut offers = index_tree
+        let offers = index_tree
             .get_available_offers(
                 request_offer.region_id,
                 request_offer.number_days,
