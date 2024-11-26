@@ -163,7 +163,7 @@ impl DBManager {
                     if page_offers_heap.len() < page_end {
                         page_offers_heap.push(heap_item);
                     } else if let Some(top_item) = page_offers_heap.peek() {
-                        if heap_item > *top_item {
+                        if heap_item < *top_item {
                             page_offers_heap.pop();
                             page_offers_heap.push(heap_item);
                         }
