@@ -50,7 +50,7 @@ impl IndexTree {
                 if let Some(offer_map) = region.offers.get(&number_of_days) {
                     let offer_iter = offer_map
                         .range(time_range_start..)
-                        .filter(move |(end, _)| **end < time_range_end)
+                        .filter(move |(end, _)| **end <= time_range_end)
                         .map(|(_, value)| *value);
 
                     if let Some(sub_regions) = &region.sub_regions {
