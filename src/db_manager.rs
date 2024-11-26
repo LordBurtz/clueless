@@ -231,7 +231,7 @@ impl DBManager {
         }
 
         // Extract the offers for the current page from the heap
-        let mut page_offers_vec: Vec<_> = page_offers_heap
+        let page_offers_vec: Vec<_> = page_offers_heap
             .into_sorted_vec()
             .into_iter()
             .map(|Reverse(item)| item)
