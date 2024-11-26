@@ -155,10 +155,10 @@ impl DBManager {
                         SortOrder::PriceDesc => u32::MAX - offer.price,
                     };
 
-                    let heap_item = Reverse(HeapItem {
+                    let heap_item = HeapItem {
                         sort_key,
                         offer,
-                    });
+                    };
 
                     if page_offers_heap.len() < page_end {
                         page_offers_heap.push(heap_item);
@@ -234,7 +234,6 @@ impl DBManager {
         let page_offers_vec: Vec<_> = page_offers_heap
             .into_sorted_vec()
             .into_iter()
-            .map(|Reverse(item)| item)
             .collect();
 
 
