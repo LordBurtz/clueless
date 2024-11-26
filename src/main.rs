@@ -150,18 +150,10 @@ async fn api_post_response(
     Ok(response)
 }
 
-use std::sync::atomic::{AtomicI32, Ordering};
-static REQUEST_COUNT : AtomicI32 = AtomicI32::new(0);
-
 async fn handle_get_offers_request(
     req: Request<IncomingBody>,
     manager: &DBManager,
 ) -> Result<Response<BoxBody>> {
-    REQUEST_COUNT.fetch_add(1, Ordering::Relaxed);
-    if REQUEST_COUNT.load(Ordering::Relaxed) > 10_001 {
-        return Ok(Response::builder().status(StatusCode::BAD_REQUEST)
-            .header(header::CONTENT_TYPE, "application/json").body(full(""))?)
-    }
     let query: RequestOffer = serde_urlencoded::from_str(req.uri().query().unwrap())?;
 
     let (response, status_code) = match manager.query_for(query).await {
@@ -179,11 +171,11 @@ async fn handle_get_offers_request(
             )
         }
     };
+
     let response = Response::builder()
         .status(status_code)
         .header(header::CONTENT_TYPE, "application/json")
         .body(response)?;
-    REQUEST_COUNT.fetch_sub(1, Ordering::Relaxed);
     Ok(response)
 }
 

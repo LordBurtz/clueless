@@ -46,8 +46,6 @@ def parse_log_file(log_file_path, output_dir):
                                     if key == "Offers":
                                         diff_dic["actual_amount"] = len(actual[key])
                                         diff_dic["wanted_amount"] = len(wanted[key])
-                                        if diff_dic['wanted_amount'] != 0:
-                                            diff_dic["relative_diff"] = (abs(diff_dic["actual_amount"] - diff_dic["wanted_amount"])) / diff_dic["wanted_amount"]
                                     temp.append(diff_dic)
 
                             diff['diff'] += temp
@@ -57,9 +55,6 @@ def parse_log_file(log_file_path, output_dir):
                 except json.JSONDecodeError:
                     continue
 
-        if len(failed_cases) == 0:
-            failed_cases.append("Only Time outs")
-
         os.makedirs(output_dir, exist_ok=True)
 
         push_file = os.path.join(output_dir, "push_offers.json")
@@ -67,9 +62,6 @@ def parse_log_file(log_file_path, output_dir):
         failed_file = os.path.join(output_dir, "failed_cases.json")
         wanted_file = os.path.join(output_dir, "wanted.json")
         actual_file = os.path.join(output_dir, "actual.json")
-        print("Count push offers:", len(push_offers))
-        print("Count read offers:", len(read_offers))
-        print("Count failed cases:", len(failed_cases))
 
         with open(push_file, 'w') as f:
             json.dump(push_offers, f, indent=4)
