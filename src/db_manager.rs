@@ -1,3 +1,4 @@
+use std::cmp::Reverse;
 use crate::db_models::{CarType, Offer};
 use crate::index_tree::{IndexTree, ROOT_REGION};
 use crate::json_models::{
@@ -8,7 +9,7 @@ use crate::GenericError;
 use fxhash::{FxBuildHasher, FxHashMap};
 use gxhash::HashMapExt;
 use itertools::Itertools;
-use std::collections::HashMap;
+use std::collections::{BinaryHeap, HashMap};
 use tokio::sync::RwLock;
 
 pub struct DBManager {
@@ -28,6 +29,36 @@ impl CarType {
     }
 }
 
+use std::cmp::Ordering;
+
+struct HeapItem<'a> {
+    sort_key: u32,
+    offer: &'a Offer,
+}
+
+impl<'a> PartialEq for HeapItem<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.offer.idx == other.offer.idx
+    }
+}
+
+impl<'a> Eq for HeapItem<'a> {}
+
+impl<'a> PartialOrd for HeapItem<'a> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other)) // Delegate to `Ord` implementation
+    }
+}
+
+impl<'a> Ord for HeapItem<'a> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.sort_key.cmp(&other.sort_key)
+            .then_with(|| self.offer.id.cmp(&other.offer.id)) // Tie-breaker
+    }
+}
+
+
+
 impl DBManager {
     pub fn new() -> Self {
         Self {
@@ -42,7 +73,13 @@ impl DBManager {
     ) -> Result<GetReponseBodyModel, GenericError> {
         let dense_store = self.dense_store_lock.read().await;
         let index_tree = self.index_tree_lock.read().await;
-        let offers = index_tree
+
+        let mut page_offers_heap = BinaryHeap::new();
+        let page_size = request_offer.page_size as usize;
+        let page_start = (request_offer.page * request_offer.page_size) as usize;
+        let page_end = page_start + page_size;
+
+        let offers_iter = index_tree
             .get_available_offers(
                 request_offer.region_id,
                 request_offer.number_days,
@@ -50,8 +87,6 @@ impl DBManager {
                 request_offer.time_range_end,
             )
             .map(|offer_idx| &dense_store.all[offer_idx as usize]);
-
-        let mut filtered_offers = Vec::new();
 
         let mut vollkasko_count = VollKaskoCount {
             true_count: 0,
@@ -69,7 +104,7 @@ impl DBManager {
         let mut price_range_interval_mapping = FxHashMap::new();
         let mut seats_count_map = FxHashMap::new();
 
-        for offer in offers {
+        for offer in offers_iter {
             let mut seats_incl = true;
             let mut car_type_incl = true;
             let mut only_vollkasko_ignored = true;
@@ -114,7 +149,25 @@ impl DBManager {
                 price_range_incl,
             ) {
                 (true, true, true, true, true) => {
-                    filtered_offers.push(offer);
+
+                    let sort_key = match request_offer.sort_order {
+                        SortOrder::PriceAsc => offer.price,
+                        SortOrder::PriceDesc => u32::MAX - offer.price,
+                    };
+
+                    let heap_item = Reverse(HeapItem {
+                        sort_key,
+                        offer,
+                    });
+
+                    if page_offers_heap.len() < page_end {
+                        page_offers_heap.push(heap_item);
+                    } else if let Some(top_item) = page_offers_heap.peek() {
+                        if heap_item > *top_item {
+                            page_offers_heap.pop();
+                            page_offers_heap.push(heap_item);
+                        }
+                    }
                     Self::handle_vollkasko_count(&mut vollkasko_count, offer);
                     Self::handle_car_type_count(&mut car_type_count, offer);
                     Self::handle_free_kilometers_range(
@@ -177,11 +230,24 @@ impl DBManager {
             });
         }
 
-        //
-        // Apply all optional filters, then paginate and return
-        //
+        // Extract the offers for the current page from the heap
+        let mut page_offers_vec: Vec<_> = page_offers_heap
+            .into_sorted_vec()
+            .into_iter()
+            .map(|Reverse(item)| item)
+            .collect();
 
-        let paged_offers = Self::sort_orders_and_paginate(&mut filtered_offers, request_offer);
+
+        // Paginate
+        let paged_offers = page_offers_vec
+            .into_iter()
+            .skip(page_start)
+            .take(page_size)
+            .map(|item| ResponseOffer {
+                ID: item.offer.id.clone(),
+                data: item.offer.data.clone(),
+            })
+            .collect();
 
         Ok(GetReponseBodyModel {
             offers: paged_offers,

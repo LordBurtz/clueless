@@ -33,6 +33,8 @@ def parse_log_file(log_file_path, output_dir):
                         if "expected_result" not in entry:
                             continue
                         wanted_cases.append(entry['expected_result'])
+                        if "actual_result" not in entry:
+                            continue
                         actual_cases.append(entry['actual_result'])
                         wanted = entry['expected_result']
                         actual = entry['actual_result']
