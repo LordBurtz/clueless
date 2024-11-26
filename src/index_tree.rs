@@ -63,7 +63,7 @@ impl IndexTree {
 
                     let offer_iter = offers[start_idx..]
                         .iter()
-                        .take_while(move |offer| offer.start_date <= time_range_end)
+                        .take_while(|offer| offer.start_date <= time_range_end)
                         .filter(move |offer| offer.end_date <= time_range_end)
                         .map(|offer| offer.idx);
 
@@ -78,12 +78,6 @@ impl IndexTree {
             None
         })
         .flatten()
-    }
-
-    pub fn clear_offers(&mut self) {
-        for element in &mut self.regions {
-            element.offers.clear();
-        }
     }
 
     pub fn insert_offer(&mut self, region_id: u8, offer: &Offer) {
@@ -110,6 +104,12 @@ impl IndexTree {
                     idx: offer.idx,
                 }]
             });
+    }
+
+    pub fn clear_offers(&mut self) {
+        for element in &mut self.regions {
+            element.offers.clear();
+        }
     }
 }
 
