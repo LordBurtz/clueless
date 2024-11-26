@@ -87,11 +87,6 @@ impl IndexTree {
     }
 
     pub fn insert_offer(&mut self, region_id: u8, offer: &Offer) {
-        let offer = IndexTreeOffer {
-            start_date: offer.start_date,
-            end_date: offer.end_date,
-            idx: offer.idx,
-        };
         self.regions[region_id as usize]
             .offers
             .entry(((offer.end_date - offer.start_date) / (1000 * 60 * 60 * 24)) as u32)
@@ -99,9 +94,22 @@ impl IndexTree {
                 let idx = v
                     .binary_search_by_key(&offer.start_date, |offer| offer.start_date)
                     .unwrap_or_else(|x| x);
-                v.insert(idx, offer);
+                v.insert(
+                    idx,
+                    IndexTreeOffer {
+                        start_date: offer.start_date,
+                        end_date: offer.end_date,
+                        idx: offer.idx,
+                    },
+                );
             })
-            .or_insert_with(|| vec![offer]);
+            .or_insert_with(|| {
+                vec![IndexTreeOffer {
+                    start_date: offer.start_date,
+                    end_date: offer.end_date,
+                    idx: offer.idx,
+                }]
+            });
     }
 }
 
