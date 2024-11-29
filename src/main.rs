@@ -151,6 +151,7 @@ async fn handle_get_offers_request(
     req: Request<IncomingBody>,
     manager: &DBManager,
 ) -> Result<Response<BoxBody>> {
+    println!("{:?}", req.uri().query().unwrap_or(""));
     let query: RequestOffer = sonic_rs::from_str(req.uri().query().unwrap())?;
 
     let (response, status_code) = match manager.query_for(query).await {
