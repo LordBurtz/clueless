@@ -4,6 +4,7 @@ mod db_manager;
 mod db_models;
 mod json_models;
 mod index_tree;
+mod parsing;
 
 use json_models::*;
 
@@ -151,8 +152,9 @@ async fn handle_get_offers_request(
     req: Request<IncomingBody>,
     manager: &DBManager,
 ) -> Result<Response<BoxBody>> {
-    println!("{:?}", req.uri().query().unwrap_or(""));
-    let query: RequestOffer = sonic_rs::from_str(req.uri().query().unwrap())?;
+    // println!("{:?}", req.uri().query().unwrap_or(""));
+    let query = parsing::parse_request_offer(&req.uri().query().unwrap()).unwrap();
+    // let query: RequestOffer = sonic_rs::from_str(req.uri().query().unwrap())?;
 
     let (response, status_code) = match manager.query_for(query).await {
         Ok(res) => {
