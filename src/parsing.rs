@@ -99,7 +99,7 @@ pub fn parse_request_offer(query: &str) -> RequestOffer {
         unsafe {
             //anyways
                 let (key, value) = {
-                    let mut split = pair.splitn(1, '=');
+                    let mut split = pair.splitn(2, '=');
                     (split.next().unwrap_unchecked(), split.next().unwrap_unchecked())
                 };
 
