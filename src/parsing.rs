@@ -11,7 +11,7 @@ use crate::GenericError;
 use crate::json_models::SortOrder;
 use crate::json_models::CarType;
 use crate::json_models::RequestOffer;
-
+use crate::json_models::SortOrder::PriceAsc;
 
 impl FromStr for SortOrder {
     type Err = ();
@@ -21,6 +21,16 @@ impl FromStr for SortOrder {
             "price-asc" => Ok(SortOrder::PriceAsc),
             "price-desc" => Ok(SortOrder::PriceDesc),
             _ => Err(()),
+        }
+    }
+}
+
+impl SortOrder {
+    #[inline(always)]
+    fn fast_from_str(s: &str) -> Self {
+        match s {
+            "price-desc" => SortOrder::PriceDesc,
+            _ => PriceAsc,
         }
     }
 }
@@ -84,35 +94,35 @@ pub fn parse_request_offer(query: &str) -> RequestOffer {
     let mut only_vollkasko = None;
     let mut min_free_kilometers = None;
 
-    let mut pairs = query.split('&');
-    // oh no
-    unsafe {
-        // anyways
-    while let Some(pair) = pairs.next() {
-        let (key, value) = {
-            let mut split = pair.splitn(2, '=');
-            (split.next().unwrap_unchecked(), split.next().unwrap_unchecked())
-        };
+    query.split('&').for_each(|pair | {
+        // oh no
+        unsafe {
+            //anyways
+                let (key, value) = {
+                    let mut split = pair.splitn(1, '=');
+                    (split.next().unwrap_unchecked(), split.next().unwrap_unchecked())
+                };
 
-        match key {
-            "regionID" => region_id = value.parse::<u8>().unwrap_unchecked(),
-            "timeRangeStart" => time_range_start = value.parse::<u64>().unwrap_unchecked(),
-            "timeRangeEnd" => time_range_end = value.parse::<u64>().unwrap_unchecked(),
-            "numberDays" => number_days = value.parse::<u32>().unwrap_unchecked(),
-            "sortOrder" => sort_order = SortOrder::from_str(value).unwrap_unchecked(),
-            "page" => page = value.parse::<u32>().unwrap_unchecked(),
-            "pageSize" => page_size = value.parse::<u32>().unwrap_unchecked(),
-            "priceRangeWidth" => price_range_width = value.parse::<u32>().unwrap_unchecked(),
-            "minFreeKilometerWidth" => min_free_kilometer_width = value.parse::<u32>().unwrap_unchecked(),
-            "minNumberSeats" => min_number_seats = value.parse::<u32>().unwrap_unchecked().into(),
-            "minPrice" => min_price = value.parse::<u32>().unwrap_unchecked().into(),
-            "maxPrice" => max_price = value.parse::<u32>().unwrap_unchecked().into(),
-            "carType" => car_type = value.parse::<CarType>().unwrap_unchecked().into(),
-            "onlyVollkasko" => only_vollkasko = value.parse::<bool>().unwrap_unchecked().into(),
-            "minFreeKilometer" => min_free_kilometers = value.parse::<u32>().unwrap_unchecked().into(),
-            _ => {} // Skip unknown keys for simplicity
+                match key {
+                    "regionID" => region_id = value.parse::<u8>().unwrap_unchecked(),
+                    "timeRangeStart" => time_range_start = value.parse::<u64>().unwrap_unchecked(),
+                    "timeRangeEnd" => time_range_end = value.parse::<u64>().unwrap_unchecked(),
+                    "numberDays" => number_days = value.parse::<u32>().unwrap_unchecked(),
+                    "sortOrder" => sort_order = SortOrder::fast_from_str(value),
+                    "page" => page = value.parse::<u32>().unwrap_unchecked(),
+                    "pageSize" => page_size = value.parse::<u32>().unwrap_unchecked(),
+                    "priceRangeWidth" => price_range_width = value.parse::<u32>().unwrap_unchecked(),
+                    "minFreeKilometerWidth" => min_free_kilometer_width = value.parse::<u32>().unwrap_unchecked(),
+                    "minNumberSeats" => min_number_seats = value.parse::<u32>().unwrap_unchecked().into(),
+                    "minPrice" => min_price = value.parse::<u32>().unwrap_unchecked().into(),
+                    "maxPrice" => max_price = value.parse::<u32>().unwrap_unchecked().into(),
+                    "carType" => car_type = value.parse::<CarType>().unwrap_unchecked().into(),
+                    "onlyVollkasko" => only_vollkasko = value.parse::<bool>().unwrap_unchecked().into(),
+                    "minFreeKilometer" => min_free_kilometers = value.parse::<u32>().unwrap_unchecked().into(),
+                    _ => {} // Skip unknown keys for simplicity
+                }
         }
-    }}
+    });
 
     RequestOffer {
         region_id: region_id,
