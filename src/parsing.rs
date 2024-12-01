@@ -68,7 +68,6 @@ fn parse_query_string(input: &str) -> IResult<&str, Vec<(&str, &str)>> {
 
 pub fn parse_request_offer(query: &str) -> RequestOffer {
     // let (_, pairs) = parse_query_string(query).ok()?;
-    println!("check1");
     let mut region_id = 0u8;
     let mut time_range_start = 0u64;
     let mut time_range_end = 0u64;
