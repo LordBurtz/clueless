@@ -21,7 +21,7 @@ pub struct RequestOffer {
     pub min_free_kilometer: Option<u32>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum CarType {
     Small,
@@ -30,28 +30,28 @@ pub enum CarType {
     Family,
 }
 
-impl From<CarType> for db_models::CarType {
-    fn from(car_type: CarType) -> Self {
-        match car_type {
-            CarType::Small => db_models::CarType::Small,
-            CarType::Sports => db_models::CarType::Sports,
-            CarType::Luxury => db_models::CarType::Luxury,
-            CarType::Family => db_models::CarType::Family,
-        }
-    }
-}
+// impl From<CarType> for db_models::CarType {
+//     fn from(car_type: CarType) -> Self {
+//         match car_type {
+//             CarType::Small => db_models::CarType::Small,
+//             CarType::Sports => db_models::CarType::Sports,
+//             CarType::Luxury => db_models::CarType::Luxury,
+//             CarType::Family => db_models::CarType::Family,
+//         }
+//     }
+// }
 
-impl PartialEq<CarType> for CarType {
-    fn eq(&self, other: &CarType) -> bool {
-        match (self, other) {
-            (CarType::Small, CarType::Small) => true,
-            (CarType::Sports, CarType::Sports) => true,
-            (CarType::Luxury, CarType::Luxury) => true,
-            (CarType::Family, CarType::Family) => true,
-            (_, _) => false,
-        }
-    }
-}
+// impl PartialEq<CarType> for CarType {
+//     fn eq(&self, other: &CarType) -> bool {
+//         match (self, other) {
+//             (CarType::Small, CarType::Small) => true,
+//             (CarType::Sports, CarType::Sports) => true,
+//             (CarType::Luxury, CarType::Luxury) => true,
+//             (CarType::Family, CarType::Family) => true,
+//             (_, _) => false,
+//         }
+//     }
+// }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]

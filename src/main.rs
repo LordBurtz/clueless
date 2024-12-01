@@ -106,10 +106,10 @@ async fn api_post_response(
                     as u32;
 
                 let car_type = match car_type.as_str() {
-                    "small" => db_models::CarType::Small,
-                    "sports" => db_models::CarType::Sports,
-                    "luxury" => db_models::CarType::Luxury,
-                    "family" => db_models::CarType::Family,
+                    "small" => json_models::CarType::Small,
+                    "sports" => json_models::CarType::Sports,
+                    "luxury" => json_models::CarType::Luxury,
+                    "family" => json_models::CarType::Family,
                     _ => return Err("Invalid car type".into()),
                 };
                 let idx = dense_store.all.len() as u32;

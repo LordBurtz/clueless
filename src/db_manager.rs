@@ -1,9 +1,9 @@
 use std::cmp::Reverse;
-use crate::db_models::{CarType, Offer};
+use crate::db_models::{ Offer};
 use crate::index_tree::{IndexTree, ROOT_REGION};
 use crate::json_models::{
     CarTypeCount, FreeKilometerRange, GetReponseBodyModel, PriceRange, RequestOffer, ResponseOffer,
-    SeatCount, SortOrder, VollKaskoCount,
+    SeatCount, SortOrder, VollKaskoCount, CarType
 };
 use crate::GenericError;
 use fxhash::{FxBuildHasher, FxHashMap};
@@ -12,22 +12,23 @@ use itertools::Itertools;
 use std::collections::{BinaryHeap, HashMap};
 use tokio::sync::RwLock;
 
+
 pub struct DBManager {
     pub index_tree_lock: RwLock<IndexTree>,
     pub dense_store_lock: RwLock<DenseStore>,
 }
 
-impl CarType {
-    fn eq_me(&self, other: &crate::json_models::CarType) -> bool {
-        match (self, other) {
-            (CarType::Small, crate::json_models::CarType::Small) => true,
-            (CarType::Sports, crate::json_models::CarType::Sports) => true,
-            (CarType::Luxury, crate::json_models::CarType::Luxury) => true,
-            (CarType::Family, crate::json_models::CarType::Family) => true,
-            _ => false,
-        }
-    }
-}
+// impl CarType {
+//     fn eq_me(&self, other: &crate::json_models::CarType) -> bool {
+//         match (self, other) {
+//             (CarType::Small, crate::json_models::CarType::Small) => true,
+//             (CarType::Sports, crate::json_models::CarType::Sports) => true,
+//             (CarType::Luxury, crate::json_models::CarType::Luxury) => true,
+//             (CarType::Family, crate::json_models::CarType::Family) => true,
+//             _ => false,
+//         }
+//     }
+// }
 
 use std::cmp::Ordering;
 
@@ -117,7 +118,7 @@ impl DBManager {
                 }
             }
             if let Some(carType) = request_offer.car_type {
-                if !offer.car_type.eq_me(&carType) {
+                if ! (offer.car_type == carType) {
                     car_type_incl = false
                 }
             }
@@ -360,22 +361,22 @@ impl DBManager {
                     };
                 }
                 CarTypeCount {
-                    small: if CarType::Small.eq_me(&filtered_car_type) {
+                    small: if CarType::Small.eq(&filtered_car_type) {
                         filtered_offers_count
                     } else {
                         small_excluded
                     },
-                    sports: if CarType::Sports.eq_me(&filtered_car_type) {
+                    sports: if CarType::Sports.eq(&filtered_car_type) {
                         filtered_offers_count
                     } else {
                         sports_excluded
                     },
-                    luxury: if CarType::Luxury.eq_me(&filtered_car_type) {
+                    luxury: if CarType::Luxury.eq(&filtered_car_type) {
                         filtered_offers_count
                     } else {
                         luxury_excluded
                     },
-                    family: if CarType::Family.eq_me(&filtered_car_type) {
+                    family: if CarType::Family.eq(&filtered_car_type) {
                         filtered_offers_count
                     } else {
                         family_excluded

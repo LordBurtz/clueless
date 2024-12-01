@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
+use crate::json_models::CarType;
+
 #[derive(Debug, Clone)]
 pub struct Offer {
     pub idx: u32,
@@ -17,17 +19,17 @@ pub struct Offer {
     pub free_kilometers: u32,
 }
 
-#[derive(Serialize_repr, Deserialize_repr, Debug, Copy, Clone, PartialEq, Eq)]
-#[repr(u8)]
-pub enum CarType {
-    Small = 0,
-    Sports = 1,
-    Luxury = 2,
-    Family = 3,
-}
+// #[derive(Serialize_repr, Deserialize_repr, Debug, Copy, Clone, PartialEq, Eq)]
+// #[repr(u8)]
+// pub enum CarType {
+//     Small = 0,
+//     Sports = 1,
+//     Luxury = 2,
+//     Family = 3,
+// }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct RegionHierarchy {
-    pub ancestor_id: u32,
-    pub descendant_id: u32,
-}
+// #[derive(Serialize, Deserialize, Debug)]
+// pub struct RegionHierarchy {
+//     pub ancestor_id: u32,
+//     pub descendant_id: u32,
+// }

@@ -115,7 +115,7 @@ impl IndexTree {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db_models::CarType;
+    use crate::json_models::CarType;
 
     fn get_offer(start_date: u64, end_date: u64, idx: u32) -> Offer {
         Offer {
