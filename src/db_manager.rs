@@ -18,18 +18,6 @@ pub struct DBManager {
     pub dense_store_lock: RwLock<DenseStore>,
 }
 
-// impl CarType {
-//     fn eq_me(&self, other: &crate::json_models::CarType) -> bool {
-//         match (self, other) {
-//             (CarType::Small, crate::json_models::CarType::Small) => true,
-//             (CarType::Sports, crate::json_models::CarType::Sports) => true,
-//             (CarType::Luxury, crate::json_models::CarType::Luxury) => true,
-//             (CarType::Family, crate::json_models::CarType::Family) => true,
-//             _ => false,
-//         }
-//     }
-// }
-
 use std::cmp::Ordering;
 
 struct HeapItem<'a> {
@@ -47,7 +35,7 @@ impl<'a> Eq for HeapItem<'a> {}
 
 impl<'a> PartialOrd for HeapItem<'a> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other)) // Delegate to `Ord` implementation
+        Some(self.cmp(other))    // Delegate to `Ord` implementation
     }
 }
 

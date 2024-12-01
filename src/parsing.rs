@@ -8,7 +8,7 @@ use nom::{
 };
 use std::str::FromStr;
 use crate::GenericError;
-use crate::json_models::SortOrder;
+use crate::json_models::{GetReponseBodyModel, SortOrder};
 use crate::json_models::CarType;
 use crate::json_models::RequestOffer;
 use crate::json_models::SortOrder::PriceAsc;
@@ -156,3 +156,90 @@ mod tests {
         assert_eq!(true, true);
     }
 }
+
+
+impl GetReponseBodyModel {
+    pub unsafe fn to_json(&self) -> String {
+        let mut json = String::with_capacity(1024); // Preallocate memory to reduce reallocations
+
+        json.push('{');
+
+        // Offers
+        json.push_str("\"offers\":[");
+        for (i, offer) in self.offers.iter().enumerate() {
+            if i > 0 {
+                json.push(',');
+            }
+            json.push('{');
+            json.push_str("\"ID\":\"");
+            json.push_str(&offer.ID);
+            json.push_str("\",\"data\":\"");
+            json.push_str(&offer.data);
+            json.push_str("\"}");
+        }
+        json.push(']');
+
+        // Price ranges
+        json.push_str(",\"price_ranges\":[");
+        for (i, range) in self.price_ranges.iter().enumerate() {
+            if i > 0 {
+                json.push(',');
+            }
+            json.push_str(&format!(
+                "{{\"start\":{},\"end\":{},\"count\":{}}}",
+                range.start, range.end, range.count
+            ));
+        }
+        json.push(']');
+
+        // Car type counts
+        json.push_str(",\"car_type_counts\":{");
+        json.push_str(&format!(
+            "\"small\":{},\"sports\":{},\"luxury\":{},\"family\":{}",
+            self.car_type_counts.small,
+            self.car_type_counts.sports,
+            self.car_type_counts.luxury,
+            self.car_type_counts.family
+        ));
+        json.push('}');
+
+        // Seat counts
+        json.push_str(",\"seats_count\":[");
+        for (i, seat) in self.seats_count.iter().enumerate() {
+            if i > 0 {
+                json.push(',');
+            }
+            json.push_str(&format!(
+                "{{\"count\":{},\"number_seats\":{}}}",
+                seat.count, seat.number_seats
+            ));
+        }
+        json.push(']');
+
+        // Free kilometer range
+        json.push_str(",\"free_kilometer_range\":[");
+        for (i, range) in self.free_kilometer_range.iter().enumerate() {
+            if i > 0 {
+                json.push(',');
+            }
+            json.push_str(&format!(
+                "{{\"start\":{},\"end\":{},\"count\":{}}}",
+                range.start, range.end, range.count
+            ));
+        }
+        json.push(']');
+
+        // Vollkasko count
+        json.push_str(",\"vollkasko_count\":{");
+        json.push_str(&format!(
+            "\"true_count\":{},\"false_count\":{}",
+            self.vollkasko_count.true_count, self.vollkasko_count.false_count
+        ));
+        json.push('}');
+
+        json.push('}');
+
+        json
+    }
+}
+

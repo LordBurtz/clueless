@@ -152,14 +152,12 @@ async fn handle_get_offers_request(
     req: Request<IncomingBody>,
     manager: &DBManager,
 ) -> Result<Response<BoxBody>> {
-    // println!("{:?}", req.uri().query().unwrap_or(""));
     let query = parsing::parse_request_offer(&req.uri().query().unwrap());
-    // let query: RequestOffer = sonic_rs::from_str(req.uri().query().unwrap())?;
 
     let (response, status_code) = match manager.query_for(query).await {
         Ok(res) => {
             // normally use res but now mock
-            let json = sonic_rs::to_string(&res)?;
+            let json = unsafe { res.to_json() };
 
             (full(json), StatusCode::OK)
         }
